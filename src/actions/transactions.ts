@@ -53,7 +53,7 @@ export async function createTransaction(
     }
   }
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: txn as Transaction };
 }
 
@@ -94,6 +94,6 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("transactions").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }

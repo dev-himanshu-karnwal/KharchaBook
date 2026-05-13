@@ -27,7 +27,7 @@ export async function createAccount(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: account as Account };
 }
 
@@ -41,7 +41,7 @@ export async function updateAccount(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
 
@@ -63,7 +63,7 @@ export async function deleteAccount(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("accounts").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
 
@@ -80,6 +80,6 @@ export async function toggleAccountActive(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }

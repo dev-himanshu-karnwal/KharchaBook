@@ -29,7 +29,7 @@ export async function createCategory(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: category as Category };
 }
 
@@ -39,6 +39,6 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }

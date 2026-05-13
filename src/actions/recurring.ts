@@ -71,7 +71,7 @@ export async function createRecurring(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: rec as RecurringTransaction };
 }
 
@@ -94,7 +94,7 @@ export async function updateRecurring(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
 
@@ -104,7 +104,7 @@ export async function deleteRecurring(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("recurring_transactions").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
 
@@ -121,6 +121,6 @@ export async function toggleRecurringActive(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
