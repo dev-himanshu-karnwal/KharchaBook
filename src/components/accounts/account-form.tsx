@@ -55,7 +55,10 @@ export function AccountForm({ onSubmit, onCancel, loading }: AccountFormProps) {
 
       <div className="space-y-2">
         <Label>Type</Label>
-        <Select value={type} onValueChange={(v) => v && setType(v as AccountType)}>
+        <Select
+          value={type}
+          onValueChange={(v) => v && setType(v as AccountType)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -91,7 +94,7 @@ export function AccountForm({ onSubmit, onCancel, loading }: AccountFormProps) {
               onClick={() => setColor(c)}
               className={cn(
                 "h-6 w-6 rounded-full transition-all",
-                color === c ? "ring-2 ring-offset-2 ring-offset-background" : "",
+                color === c ? "ring-offset-background ring-2 ring-offset-2" : ""
               )}
               style={{ backgroundColor: c, ["--tw-ring-color" as string]: c }}
             />
@@ -100,10 +103,19 @@ export function AccountForm({ onSubmit, onCancel, loading }: AccountFormProps) {
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={onCancel}
+        >
           Cancel
         </Button>
-        <Button type="submit" className="flex-1" disabled={loading || !name.trim()}>
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={loading || !name.trim()}
+        >
           {loading ? "Saving..." : "Add Account"}
         </Button>
       </div>

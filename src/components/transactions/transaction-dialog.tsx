@@ -56,7 +56,7 @@ export function TransactionDialog() {
           <DialogTitle>Add Transaction</DialogTitle>
         </DialogHeader>
         {accounts.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground py-6 text-center text-sm">
             Add an account first before recording transactions.
           </p>
         ) : (

@@ -18,7 +18,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
           <CardTitle className="text-base">Accounts</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center text-sm">
             No accounts yet.{" "}
             <Link href="/accounts" className="text-primary hover:underline">
               Add your first account
@@ -36,7 +36,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
         <CardTitle className="text-base">Accounts</CardTitle>
         <Link
           href="/accounts"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground text-sm"
         >
           Manage
         </Link>
@@ -45,7 +45,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
         {accounts.map((account) => (
           <div
             key={account.id}
-            className="flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
+            className="hover:bg-muted/50 flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors"
           >
             <div className="flex items-center gap-3">
               <span
@@ -54,7 +54,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
               />
               <div>
                 <p className="text-sm font-medium">{account.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {TYPE_LABELS[account.type]}
                 </p>
               </div>

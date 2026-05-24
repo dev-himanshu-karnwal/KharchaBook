@@ -1,29 +1,107 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteTransaction } from "@/actions/transactions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import type { Transaction } from "@/lib/types";
+import type { Account, Category, Transaction } from "@/lib/types";
+import {
+  DEFAULT_TRANSACTION_FILTERS,
+  filterTransactions,
+  groupByDate,
+  hasActiveFilters,
+  sortTransactions,
+  type TransactionFilters,
+} from "@/lib/transaction-filters";
+import { TransactionToolbar } from "./transaction-toolbar";
 
-function groupByDate(transactions: Transaction[]) {
-  const groups: Record<string, Transaction[]> = {};
-  for (const txn of transactions) {
-    const key = txn.date;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(txn);
-  }
-  return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
+function TransactionRow({
+  txn,
+  onDelete,
+}: {
+  txn: Transaction;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="group hover:border-border hover:bg-muted/30 flex items-center justify-between rounded-lg border border-transparent px-3 py-2.5 transition-colors">
+      <div className="flex items-center gap-3">
+        <span
+          className="h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{
+            backgroundColor: txn.category?.color ?? "#888",
+          }}
+        />
+        <div>
+          <p className="text-sm font-medium">
+            {txn.description || txn.category?.name || txn.type}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            {txn.account?.name}
+            {txn.type === "transfer" && txn.transfer_to_account && (
+              <> &rarr; {txn.transfer_to_account.name}</>
+            )}
+            {txn.category && txn.description && (
+              <> &middot; {txn.category.name}</>
+            )}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "text-sm font-semibold tabular-nums",
+            txn.type === "income"
+              ? "text-emerald-400"
+              : txn.type === "expense"
+                ? "text-red-400"
+                : "text-blue-400"
+          )}
+        >
+          {txn.type === "income" ? "+" : txn.type === "expense" ? "-" : ""}
+          {formatCurrency(txn.amount)}
+        </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={() => onDelete(txn.id)}
+        >
+          <Trash2 className="text-muted-foreground h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function TransactionList({
   transactions,
+  accounts,
+  categories,
 }: {
   transactions: Transaction[];
+  accounts: Account[];
+  categories: Category[];
 }) {
   const router = useRouter();
+  const [filters, setFilters] = useState<TransactionFilters>(
+    DEFAULT_TRANSACTION_FILTERS
+  );
+
+  const filtered = useMemo(() => {
+    const matched = filterTransactions(transactions, filters);
+    return sortTransactions(matched, filters.sortField, filters.sortDir);
+  }, [transactions, filters]);
+
+  const grouped = useMemo(
+    () =>
+      filters.sortField === "date"
+        ? groupByDate(filtered, filters.sortDir)
+        : null,
+    [filtered, filters.sortField, filters.sortDir]
+  );
 
   async function handleDelete(id: string) {
     const result = await deleteTransaction(id);
@@ -35,79 +113,71 @@ export function TransactionList({
     }
   }
 
-  if (transactions.length === 0) {
-    return (
-      <p className="py-16 text-center text-sm text-muted-foreground">
-        No transactions found. Start by adding your first transaction.
-      </p>
-    );
-  }
-
-  const grouped = groupByDate(transactions);
+  const emptyAll = transactions.length === 0;
+  const emptyFiltered = !emptyAll && filtered.length === 0;
 
   return (
-    <div className="space-y-6">
-      {grouped.map(([date, txns]) => (
-        <div key={date}>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {formatDate(date)}
-          </h3>
-          <div className="space-y-1">
-            {txns.map((txn) => (
-              <div
-                key={txn.id}
-                className="group flex items-center justify-between rounded-lg border border-transparent px-3 py-2.5 transition-colors hover:border-border hover:bg-muted/30"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor: txn.category?.color ?? "#888",
-                    }}
-                  />
-                  <div>
-                    <p className="text-sm font-medium">
-                      {txn.description || txn.category?.name || txn.type}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {txn.account?.name}
-                      {txn.type === "transfer" && txn.transfer_to_account && (
-                        <> &rarr; {txn.transfer_to_account.name}</>
-                      )}
-                      {txn.category && txn.description && (
-                        <> &middot; {txn.category.name}</>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "text-sm font-semibold tabular-nums",
-                      txn.type === "income"
-                        ? "text-emerald-400"
-                        : txn.type === "expense"
-                          ? "text-red-400"
-                          : "text-blue-400",
-                    )}
-                  >
-                    {txn.type === "income" ? "+" : txn.type === "expense" ? "-" : ""}
-                    {formatCurrency(txn.amount)}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={() => handleDelete(txn.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="space-y-4">
+      {!emptyAll && (
+        <TransactionToolbar
+          filters={filters}
+          onChange={setFilters}
+          accounts={accounts}
+          categories={categories}
+          totalCount={transactions.length}
+          filteredCount={filtered.length}
+        />
+      )}
+
+      {emptyAll && (
+        <p className="text-muted-foreground py-16 text-center text-sm">
+          No transactions found. Start by adding your first transaction.
+        </p>
+      )}
+
+      {emptyFiltered && (
+        <div className="py-16 text-center">
+          <p className="text-muted-foreground text-sm">
+            No transactions match your filters.
+          </p>
+          {hasActiveFilters(filters) && (
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-2"
+              onClick={() => setFilters(DEFAULT_TRANSACTION_FILTERS)}
+            >
+              Clear filters
+            </Button>
+          )}
         </div>
-      ))}
+      )}
+
+      {grouped &&
+        grouped.map(([date, txns]) => (
+          <div key={date}>
+            <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
+              {formatDate(date)}
+            </h3>
+            <div className="space-y-1">
+              {txns.map((txn) => (
+                <TransactionRow
+                  key={txn.id}
+                  txn={txn}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+
+      {!grouped && filtered.length > 0 && (
+        <div className="space-y-1">
+          {filtered.map((txn) => (
+            <TransactionRow key={txn.id} txn={txn} onDelete={handleDelete} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

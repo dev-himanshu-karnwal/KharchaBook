@@ -51,13 +51,23 @@ export function RecurringForm({
   initialData,
 }: RecurringFormProps) {
   const isEditing = !!initialData;
-  const [type, setType] = useState<TransactionType>(initialData?.type ?? "expense");
+  const [type, setType] = useState<TransactionType>(
+    initialData?.type ?? "expense"
+  );
   const [name, setName] = useState(initialData?.name ?? "");
-  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : "");
-  const [accountId, setAccountId] = useState(initialData?.account_id ?? accounts[0]?.id ?? "");
+  const [amount, setAmount] = useState(
+    initialData ? String(initialData.amount) : ""
+  );
+  const [accountId, setAccountId] = useState(
+    initialData?.account_id ?? accounts[0]?.id ?? ""
+  );
   const [categoryId, setCategoryId] = useState(initialData?.category_id ?? "");
-  const [frequency, setFrequency] = useState<Frequency>(initialData?.frequency ?? "monthly");
-  const [startDate, setStartDate] = useState(initialData?.start_date ?? toISODate());
+  const [frequency, setFrequency] = useState<Frequency>(
+    initialData?.frequency ?? "monthly"
+  );
+  const [startDate, setStartDate] = useState(
+    initialData?.start_date ?? toISODate()
+  );
   const [endDate, setEndDate] = useState(initialData?.end_date ?? "");
   const [tag, setTag] = useState<RecurringTag | "">(initialData?.tag ?? "");
   const [notes, setNotes] = useState(initialData?.notes ?? "");
@@ -86,7 +96,7 @@ export function RecurringForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Type toggle */}
-      <div className="flex gap-1 rounded-lg bg-muted p-1">
+      <div className="bg-muted flex gap-1 rounded-lg p-1">
         {(["expense", "income"] as const).map((t) => (
           <button
             key={t}
@@ -96,7 +106,7 @@ export function RecurringForm({
               "flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors",
               type === t
                 ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {t}
@@ -133,7 +143,10 @@ export function RecurringForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label>Frequency</Label>
-          <Select value={frequency} onValueChange={(v) => v && setFrequency(v as Frequency)}>
+          <Select
+            value={frequency}
+            onValueChange={(v) => v && setFrequency(v as Frequency)}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -149,7 +162,10 @@ export function RecurringForm({
 
         <div className="space-y-2">
           <Label>Tag</Label>
-          <Select value={tag} onValueChange={(v) => setTag((v ?? "") as RecurringTag | "")}>
+          <Select
+            value={tag}
+            onValueChange={(v) => setTag((v ?? "") as RecurringTag | "")}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Optional" />
             </SelectTrigger>
@@ -166,7 +182,11 @@ export function RecurringForm({
 
       <div className="space-y-2">
         <Label>Account</Label>
-        <Select value={accountId} onValueChange={(v) => v && setAccountId(v)} required>
+        <Select
+          value={accountId}
+          onValueChange={(v) => v && setAccountId(v)}
+          required
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select account" />
           </SelectTrigger>
@@ -182,7 +202,10 @@ export function RecurringForm({
 
       <div className="space-y-2">
         <Label>Category</Label>
-        <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
+        <Select
+          value={categoryId}
+          onValueChange={(v) => setCategoryId(v ?? "")}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
@@ -235,7 +258,12 @@ export function RecurringForm({
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={onCancel}
+        >
           Cancel
         </Button>
         <Button

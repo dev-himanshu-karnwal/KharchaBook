@@ -40,7 +40,7 @@ function computeNextDueDate(startDate: string, frequency: Frequency): string {
 }
 
 export async function createRecurring(
-  data: CreateRecurringInput,
+  data: CreateRecurringInput
 ): Promise<ActionResult<RecurringTransaction>> {
   const supabase = await createClient();
   const {
@@ -77,14 +77,17 @@ export async function createRecurring(
 
 export async function updateRecurring(
   id: string,
-  data: Partial<CreateRecurringInput>,
+  data: Partial<CreateRecurringInput>
 ): Promise<ActionResult> {
   const supabase = await createClient();
 
   const updateData: Record<string, unknown> = { ...data };
 
   if (data.start_date && data.frequency) {
-    updateData.next_due_date = computeNextDueDate(data.start_date, data.frequency);
+    updateData.next_due_date = computeNextDueDate(
+      data.start_date,
+      data.frequency
+    );
   }
 
   const { error } = await supabase
@@ -101,7 +104,10 @@ export async function updateRecurring(
 export async function deleteRecurring(id: string): Promise<ActionResult> {
   const supabase = await createClient();
 
-  const { error } = await supabase.from("recurring_transactions").delete().eq("id", id);
+  const { error } = await supabase
+    .from("recurring_transactions")
+    .delete()
+    .eq("id", id);
   if (error) return { success: false, error: error.message };
 
   revalidatePath("/", "layout");
@@ -110,7 +116,7 @@ export async function deleteRecurring(id: string): Promise<ActionResult> {
 
 export async function toggleRecurringActive(
   id: string,
-  isActive: boolean,
+  isActive: boolean
 ): Promise<ActionResult> {
   const supabase = await createClient();
 

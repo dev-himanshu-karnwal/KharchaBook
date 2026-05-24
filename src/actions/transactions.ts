@@ -2,10 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
-import type { ActionResult, CreateTransactionInput, Transaction } from "@/lib/types";
+import type {
+  ActionResult,
+  CreateTransactionInput,
+  Transaction,
+} from "@/lib/types";
 
 export async function createTransaction(
-  data: CreateTransactionInput,
+  data: CreateTransactionInput
 ): Promise<ActionResult<Transaction>> {
   const supabase = await createClient();
   const {
@@ -66,7 +70,8 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     .eq("id", id)
     .single();
 
-  if (fetchErr || !txn) return { success: false, error: "Transaction not found" };
+  if (fetchErr || !txn)
+    return { success: false, error: "Transaction not found" };
 
   if (txn.type === "expense") {
     await supabase.rpc("adjust_account_balance", {

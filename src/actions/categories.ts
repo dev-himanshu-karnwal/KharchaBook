@@ -7,7 +7,7 @@ import type { ActionResult, Category, CategoryType } from "@/lib/types";
 export async function createCategory(
   name: string,
   type: CategoryType,
-  color: string | null,
+  color: string | null
 ): Promise<ActionResult<Category>> {
   const supabase = await createClient();
   const {

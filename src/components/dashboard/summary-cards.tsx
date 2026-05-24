@@ -36,7 +36,7 @@ export function SummaryCards({ summary }: { summary: MonthlySummary }) {
       {cards.map(({ key, label, icon: Icon, colorClass }) => (
         <Card key={key}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               {label}
             </CardTitle>
             <Icon className={`h-4 w-4 ${colorClass}`} />

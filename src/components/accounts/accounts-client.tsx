@@ -58,7 +58,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {accounts.length} account{accounts.length !== 1 ? "s" : ""}
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -80,8 +80,9 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
       </div>
 
       {accounts.length === 0 ? (
-        <p className="py-16 text-center text-sm text-muted-foreground">
-          No accounts yet. Add your first bank account, cash wallet, or credit card.
+        <p className="text-muted-foreground py-16 text-center text-sm">
+          No accounts yet. Add your first bank account, cash wallet, or credit
+          card.
         </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -90,7 +91,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
               key={account.id}
               className={cn(
                 "transition-opacity",
-                !account.is_active && "opacity-50",
+                !account.is_active && "opacity-50"
               )}
             >
               <CardContent className="flex items-start justify-between p-4">
@@ -102,7 +103,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
                   <div>
                     <p className="font-medium">{account.name}</p>
                     <div className="mt-0.5 flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         {TYPE_LABELS[account.type]}
                       </span>
                       {!account.is_active && (
@@ -119,7 +120,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-muted-foreground"
+                  className="text-muted-foreground text-xs"
                   onClick={() => handleToggle(account.id, account.is_active)}
                 >
                   {account.is_active ? "Deactivate" : "Activate"}

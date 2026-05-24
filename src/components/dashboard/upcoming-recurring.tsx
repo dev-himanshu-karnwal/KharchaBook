@@ -16,9 +16,9 @@ export function UpcomingRecurring({
           <CardTitle className="text-base">Upcoming Obligations</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No upcoming obligations. Add recurring transactions to track EMIs, SIPs, and
-            subscriptions.
+          <p className="text-muted-foreground py-8 text-center text-sm">
+            No upcoming obligations. Add recurring transactions to track EMIs,
+            SIPs, and subscriptions.
           </p>
         </CardContent>
       </Card>
@@ -31,7 +31,7 @@ export function UpcomingRecurring({
         <CardTitle className="text-base">Upcoming Obligations</CardTitle>
         <Link
           href="/recurring"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground text-sm"
         >
           View all
         </Link>
@@ -40,17 +40,20 @@ export function UpcomingRecurring({
         {recurring.map((rec) => (
           <div
             key={rec.id}
-            className="flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
+            className="hover:bg-muted/50 flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div>
                 <p className="text-sm font-medium">{rec.name}</p>
                 <div className="flex items-center gap-2">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Due {formatDateShort(rec.next_due_date)}
                   </p>
                   {rec.tag && (
-                    <Badge variant="secondary" className="text-[10px] uppercase">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] uppercase"
+                    >
                       {rec.tag}
                     </Badge>
                   )}

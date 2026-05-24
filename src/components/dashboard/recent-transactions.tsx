@@ -16,7 +16,7 @@ export function RecentTransactions({
           <CardTitle className="text-base">Recent Transactions</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center text-sm">
             No transactions yet. Add your first one!
           </p>
         </CardContent>
@@ -30,7 +30,7 @@ export function RecentTransactions({
         <CardTitle className="text-base">Recent Transactions</CardTitle>
         <Link
           href="/transactions"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground text-sm"
         >
           View all
         </Link>
@@ -39,7 +39,7 @@ export function RecentTransactions({
         {transactions.map((txn) => (
           <div
             key={txn.id}
-            className="flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
+            className="hover:bg-muted/50 flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors"
           >
             <div className="flex items-center gap-3">
               <span
@@ -52,7 +52,7 @@ export function RecentTransactions({
                 <p className="text-sm font-medium">
                   {txn.description || txn.category?.name || txn.type}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {txn.account?.name} &middot; {formatDateShort(txn.date)}
                 </p>
               </div>
@@ -64,7 +64,7 @@ export function RecentTransactions({
                   ? "text-emerald-400"
                   : txn.type === "expense"
                     ? "text-red-400"
-                    : "text-blue-400",
+                    : "text-blue-400"
               )}
             >
               {txn.type === "income" ? "+" : txn.type === "expense" ? "-" : ""}

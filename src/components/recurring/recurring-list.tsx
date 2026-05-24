@@ -46,7 +46,9 @@ export function RecurringList({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<RecurringTransaction | null>(null);
+  const [editingItem, setEditingItem] = useState<RecurringTransaction | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -116,8 +118,9 @@ export function RecurringList({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {recurring.length} recurring transaction{recurring.length !== 1 ? "s" : ""}
+        <p className="text-muted-foreground text-sm">
+          {recurring.length} recurring transaction
+          {recurring.length !== 1 ? "s" : ""}
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button size="sm" />}>
@@ -129,7 +132,7 @@ export function RecurringList({
               <DialogTitle>Add Recurring Transaction</DialogTitle>
             </DialogHeader>
             {accounts.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
+              <p className="text-muted-foreground py-6 text-center text-sm">
                 Add an account first.
               </p>
             ) : (
@@ -144,7 +147,10 @@ export function RecurringList({
           </DialogContent>
         </Dialog>
 
-        <Dialog open={!!editingItem} onOpenChange={(v) => !v && setEditingItem(null)}>
+        <Dialog
+          open={!!editingItem}
+          onOpenChange={(v) => !v && setEditingItem(null)}
+        >
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Recurring Transaction</DialogTitle>
@@ -164,9 +170,9 @@ export function RecurringList({
       </div>
 
       {recurring.length === 0 ? (
-        <p className="py-16 text-center text-sm text-muted-foreground">
-          No recurring transactions. Track your EMIs, SIPs, subscriptions, and salary
-          here.
+        <p className="text-muted-foreground py-16 text-center text-sm">
+          No recurring transactions. Track your EMIs, SIPs, subscriptions, and
+          salary here.
         </p>
       ) : (
         <div className="space-y-2">
@@ -174,8 +180,8 @@ export function RecurringList({
             <div
               key={rec.id}
               className={cn(
-                "group flex items-center justify-between rounded-lg border border-border p-4 transition-opacity",
-                !rec.is_active && "opacity-50",
+                "group border-border flex items-center justify-between rounded-lg border p-4 transition-opacity",
+                !rec.is_active && "opacity-50"
               )}
             >
               <div className="space-y-1">
@@ -186,14 +192,14 @@ export function RecurringList({
                       variant="secondary"
                       className={cn(
                         "text-[10px] uppercase",
-                        TAG_COLORS[rec.tag] ?? "",
+                        TAG_COLORS[rec.tag] ?? ""
                       )}
                     >
                       {rec.tag}
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {rec.frequency} &middot; {rec.account?.name} &middot; Next due{" "}
                   {formatDate(rec.next_due_date)}
                 </p>
@@ -202,7 +208,7 @@ export function RecurringList({
                 <span
                   className={cn(
                     "text-sm font-semibold tabular-nums",
-                    rec.type === "income" ? "text-emerald-400" : "text-red-400",
+                    rec.type === "income" ? "text-emerald-400" : "text-red-400"
                   )}
                 >
                   {formatCurrency(rec.amount)}
@@ -211,7 +217,7 @@ export function RecurringList({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs text-muted-foreground"
+                    className="text-muted-foreground h-7 text-xs"
                     onClick={() => handleToggle(rec.id, rec.is_active)}
                   >
                     {rec.is_active ? "Pause" : "Resume"}
@@ -222,7 +228,7 @@ export function RecurringList({
                     className="h-7 w-7"
                     onClick={() => setEditingItem(rec)}
                   >
-                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Pencil className="text-muted-foreground h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -230,7 +236,7 @@ export function RecurringList({
                     className="h-7 w-7"
                     onClick={() => handleDelete(rec.id)}
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Trash2 className="text-muted-foreground h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>

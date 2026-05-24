@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { Account, ActionResult, CreateAccountInput } from "@/lib/types";
 
 export async function createAccount(
-  data: CreateAccountInput,
+  data: CreateAccountInput
 ): Promise<ActionResult<Account>> {
   const supabase = await createClient();
   const {
@@ -33,7 +33,7 @@ export async function createAccount(
 
 export async function updateAccount(
   id: string,
-  data: Partial<CreateAccountInput>,
+  data: Partial<CreateAccountInput>
 ): Promise<ActionResult> {
   const supabase = await createClient();
 
@@ -56,7 +56,8 @@ export async function deleteAccount(id: string): Promise<ActionResult> {
   if (count && count > 0) {
     return {
       success: false,
-      error: "Cannot delete account with existing transactions. Deactivate it instead.",
+      error:
+        "Cannot delete account with existing transactions. Deactivate it instead.",
     };
   }
 
@@ -69,7 +70,7 @@ export async function deleteAccount(id: string): Promise<ActionResult> {
 
 export async function toggleAccountActive(
   id: string,
-  isActive: boolean,
+  isActive: boolean
 ): Promise<ActionResult> {
   const supabase = await createClient();
 

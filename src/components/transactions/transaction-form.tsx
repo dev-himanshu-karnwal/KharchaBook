@@ -43,7 +43,7 @@ export function TransactionForm({
   const [description, setDescription] = useState("");
 
   const filteredCategories = categories.filter(
-    (c) => c.type === (type === "transfer" ? "expense" : type),
+    (c) => c.type === (type === "transfer" ? "expense" : type)
   );
 
   async function handleSubmit(e: React.FormEvent) {
@@ -65,7 +65,7 @@ export function TransactionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Type toggle */}
-      <div className="flex gap-1 rounded-lg bg-muted p-1">
+      <div className="bg-muted flex gap-1 rounded-lg p-1">
         {(["expense", "income", "transfer"] as const).map((t) => (
           <button
             key={t}
@@ -75,7 +75,7 @@ export function TransactionForm({
               "flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors",
               type === t
                 ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {t}
@@ -103,7 +103,11 @@ export function TransactionForm({
       {/* Account */}
       <div className="space-y-2">
         <Label>{type === "transfer" ? "From Account" : "Account"}</Label>
-        <Select value={accountId} onValueChange={(v) => v && setAccountId(v)} required>
+        <Select
+          value={accountId}
+          onValueChange={(v) => v && setAccountId(v)}
+          required
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select account" />
           </SelectTrigger>
@@ -121,7 +125,11 @@ export function TransactionForm({
       {type === "transfer" && (
         <div className="space-y-2">
           <Label>To Account</Label>
-          <Select value={transferToAccountId} onValueChange={(v) => v && setTransferToAccountId(v)} required>
+          <Select
+            value={transferToAccountId}
+            onValueChange={(v) => v && setTransferToAccountId(v)}
+            required
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select destination" />
             </SelectTrigger>
@@ -142,7 +150,10 @@ export function TransactionForm({
       {type !== "transfer" && (
         <div className="space-y-2">
           <Label>Category</Label>
-          <Select value={categoryId} onValueChange={(v) => setCategoryId(v ?? "")}>
+          <Select
+            value={categoryId}
+            onValueChange={(v) => setCategoryId(v ?? "")}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -188,10 +199,19 @@ export function TransactionForm({
 
       {/* Actions */}
       <div className="flex gap-2 pt-2">
-        <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          onClick={onCancel}
+        >
           Cancel
         </Button>
-        <Button type="submit" className="flex-1" disabled={loading || !accountId}>
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={loading || !accountId}
+        >
           {loading ? "Saving..." : "Save"}
         </Button>
       </div>

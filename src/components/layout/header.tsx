@@ -3,7 +3,12 @@
 import { usePathname } from "next/navigation";
 import { Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { useTransactionDialog } from "@/components/providers/transaction-dialog-provider";
 
@@ -20,7 +25,7 @@ export function Header() {
   const title = PAGE_TITLES[pathname] ?? "KharchaBook";
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-4 border-b border-border px-4 lg:px-6">
+    <header className="border-border flex h-14 shrink-0 items-center gap-4 border-b px-4 lg:px-6">
       <Sheet>
         <SheetTrigger
           render={<Button variant="ghost" size="icon" className="lg:hidden" />}

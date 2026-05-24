@@ -4,21 +4,24 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { UpcomingRecurring } from "@/components/dashboard/upcoming-recurring";
 import { AccountBalances } from "@/components/dashboard/account-balances";
-import type { Account, MonthlySummary, RecurringTransaction, Transaction } from "@/lib/types";
+import type {
+  Account,
+  MonthlySummary,
+  RecurringTransaction,
+  Transaction,
+} from "@/lib/types";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { start, end } = getMonthRange();
   const today = new Date().toISOString().split("T")[0];
-  const next30 = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+  const next30 = new Date(Date.now() + 30 * 86400000)
+    .toISOString()
+    .split("T")[0];
 
   const [accountsRes, incomeRes, expenseRes, recentRes, upcomingRes] =
     await Promise.all([
-      supabase
-        .from("accounts")
-        .select("*")
-        .eq("is_active", true)
-        .order("name"),
+      supabase.from("accounts").select("*").eq("is_active", true).order("name"),
       supabase
         .from("transactions")
         .select("amount")
@@ -49,11 +52,11 @@ export default async function DashboardPage() {
   const totalBalance = accounts.reduce((sum, a) => sum + Number(a.balance), 0);
   const monthlyIncome = (incomeRes.data ?? []).reduce(
     (sum, t) => sum + Number(t.amount),
-    0,
+    0
   );
   const monthlyExpenses = (expenseRes.data ?? []).reduce(
     (sum, t) => sum + Number(t.amount),
-    0,
+    0
   );
 
   const summary: MonthlySummary = {
@@ -67,7 +70,9 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <SummaryCards summary={summary} />
       <div className="grid gap-6 lg:grid-cols-2">
-        <RecentTransactions transactions={(recentRes.data ?? []) as Transaction[]} />
+        <RecentTransactions
+          transactions={(recentRes.data ?? []) as Transaction[]}
+        />
         <div className="space-y-6">
           <AccountBalances accounts={accounts} />
           <UpcomingRecurring

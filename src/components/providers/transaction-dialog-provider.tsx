@@ -16,7 +16,11 @@ export function useTransactionDialog() {
   return useContext(TransactionDialogContext);
 }
 
-export function TransactionDialogProvider({ children }: { children: ReactNode }) {
+export function TransactionDialogProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
