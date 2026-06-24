@@ -69,3 +69,38 @@ export function getMonthRange(date = new Date()) {
   const end = formatISODate(year, month, lastDay);
   return { start, end };
 }
+
+export function getLastMonthRange(date = new Date()) {
+  const { year, month } = getDatePartsInTimezone(date);
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevYear = month === 1 ? year - 1 : year;
+  const start = formatISODate(prevYear, prevMonth, 1);
+  const lastDay = new Date(prevYear, prevMonth, 0).getDate();
+  const end = formatISODate(prevYear, prevMonth, lastDay);
+  return { start, end };
+}
+
+export function getWeekRange(date = new Date()) {
+  const { year, month, day } = getDatePartsInTimezone(date);
+  const current = new Date(year, month - 1, day);
+  const dayOfWeek = current.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const startDate = new Date(year, month - 1, day + mondayOffset);
+  const endDate = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate() + 6
+  );
+  return {
+    start: formatISODate(
+      startDate.getFullYear(),
+      startDate.getMonth() + 1,
+      startDate.getDate()
+    ),
+    end: formatISODate(
+      endDate.getFullYear(),
+      endDate.getMonth() + 1,
+      endDate.getDate()
+    ),
+  };
+}

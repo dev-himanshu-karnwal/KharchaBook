@@ -26,7 +26,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "setup": "git config core.hooksPath .husky && echo '✅ Husky hooks configured!'"
+    "setup": "git config core.hooksPath .husky && echo '✅ Husky hooks configured!'",
+    "categories:list": "node scripts/list-categories.mjs",
+    "categories:prune-unused": "node scripts/remove-unused-categories.mjs",
+    "categories:add-expense": "node scripts/add-expense-categories.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

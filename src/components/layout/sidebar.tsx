@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   Wallet,
   Repeat,
+  Tags,
   LogOut,
 } from "lucide-react";
 import { logout } from "@/actions/auth";
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/accounts", label: "Accounts", icon: Wallet },
+  { href: "/categories", label: "Categories", icon: Tags },
   { href: "/recurring", label: "Recurring", icon: Repeat },
 ] as const;
 

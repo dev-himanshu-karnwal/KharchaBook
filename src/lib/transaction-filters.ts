@@ -69,8 +69,14 @@ export function filterTransactions(
     ) {
       return false;
     }
-    if (filters.categoryId && txn.category_id !== filters.categoryId)
-      return false;
+    if (filters.categoryId) {
+      if (filters.categoryId.startsWith("uncategorized-")) {
+        const txnType = filters.categoryId.replace("uncategorized-", "");
+        if (txn.category_id !== null || txn.type !== txnType) return false;
+      } else if (txn.category_id !== filters.categoryId) {
+        return false;
+      }
+    }
     if (filters.dateFrom && txn.date < filters.dateFrom) return false;
     if (filters.dateTo && txn.date > filters.dateTo) return false;
     return true;

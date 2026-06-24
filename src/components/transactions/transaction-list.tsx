@@ -1,13 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { deleteTransaction } from "@/actions/transactions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { deleteTransaction, updateTransaction } from "@/actions/transactions";
+import { TransactionEditForm } from "./transaction-edit-form";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import type { Account, Category, Transaction } from "@/lib/types";
+import type {
+  Account,
+  Category,
+  Transaction,
+  UpdateTransactionInput,
+} from "@/lib/types";
 import {
   DEFAULT_TRANSACTION_FILTERS,
   filterTransactions,
@@ -20,9 +33,11 @@ import { TransactionToolbar } from "./transaction-toolbar";
 
 function TransactionRow({
   txn,
+  onEdit,
   onDelete,
 }: {
   txn: Transaction;
+  onEdit: (txn: Transaction) => void;
   onDelete: (id: string) => void;
 }) {
   return (
@@ -67,6 +82,14 @@ function TransactionRow({
           variant="ghost"
           size="icon"
           className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={() => onEdit(txn)}
+        >
+          <Pencil className="text-muted-foreground h-3.5 w-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
           onClick={() => onDelete(txn.id)}
         >
           <Trash2 className="text-muted-foreground h-3.5 w-3.5" />
@@ -74,6 +97,29 @@ function TransactionRow({
       </div>
     </div>
   );
+}
+
+function filtersFromSearchParams(params: URLSearchParams): TransactionFilters {
+  const uncategorized = params.get("uncategorized");
+  const categoryId =
+    params.get("categoryId") ??
+    (uncategorized ? `uncategorized-${uncategorized}` : "");
+
+  const typeParam = params.get("type");
+  const type =
+    typeParam === "income" ||
+    typeParam === "expense" ||
+    typeParam === "transfer"
+      ? typeParam
+      : "all";
+
+  return {
+    ...DEFAULT_TRANSACTION_FILTERS,
+    categoryId,
+    type,
+    dateFrom: params.get("dateFrom") ?? "",
+    dateTo: params.get("dateTo") ?? "",
+  };
 }
 
 export function TransactionList({
@@ -86,9 +132,12 @@ export function TransactionList({
   categories: Category[];
 }) {
   const router = useRouter();
-  const [filters, setFilters] = useState<TransactionFilters>(
-    DEFAULT_TRANSACTION_FILTERS
+  const searchParams = useSearchParams();
+  const [filters, setFilters] = useState<TransactionFilters>(() =>
+    filtersFromSearchParams(searchParams)
   );
+  const [editingTxn, setEditingTxn] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const filtered = useMemo(() => {
     const matched = filterTransactions(transactions, filters);
@@ -102,6 +151,21 @@ export function TransactionList({
         : null,
     [filtered, filters.sortField, filters.sortDir]
   );
+
+  async function handleUpdate(data: UpdateTransactionInput) {
+    if (!editingTxn) return;
+    setLoading(true);
+    const result = await updateTransaction(editingTxn.id, data);
+    setLoading(false);
+
+    if (result.success) {
+      toast.success("Transaction updated");
+      setEditingTxn(null);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
 
   async function handleDelete(id: string) {
     const result = await deleteTransaction(id);
@@ -118,6 +182,26 @@ export function TransactionList({
 
   return (
     <div className="space-y-4">
+      <Dialog
+        open={!!editingTxn}
+        onOpenChange={(open) => !open && setEditingTxn(null)}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Transaction</DialogTitle>
+          </DialogHeader>
+          {editingTxn && (
+            <TransactionEditForm
+              transaction={editingTxn}
+              categories={categories}
+              onSubmit={handleUpdate}
+              onCancel={() => setEditingTxn(null)}
+              loading={loading}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {!emptyAll && (
         <TransactionToolbar
           filters={filters}
@@ -164,6 +248,7 @@ export function TransactionList({
                 <TransactionRow
                   key={txn.id}
                   txn={txn}
+                  onEdit={setEditingTxn}
                   onDelete={handleDelete}
                 />
               ))}
@@ -174,7 +259,12 @@ export function TransactionList({
       {!grouped && filtered.length > 0 && (
         <div className="space-y-1">
           {filtered.map((txn) => (
-            <TransactionRow key={txn.id} txn={txn} onDelete={handleDelete} />
+            <TransactionRow
+              key={txn.id}
+              txn={txn}
+              onEdit={setEditingTxn}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

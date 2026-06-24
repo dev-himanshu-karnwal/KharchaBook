@@ -97,6 +97,12 @@ export interface CreateTransactionInput {
   transfer_to_account_id: string | null;
 }
 
+export interface UpdateTransactionInput {
+  category_id: string | null;
+  description: string | null;
+  date: string;
+}
+
 export interface CreateAccountInput {
   name: string;
   type: AccountType;
