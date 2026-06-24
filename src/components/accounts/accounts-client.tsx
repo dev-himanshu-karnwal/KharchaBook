@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -80,24 +81,25 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
       </div>
 
       {accounts.length === 0 ? (
-        <p className="text-muted-foreground py-16 text-center text-sm">
-          No accounts yet. Add your first bank account, cash wallet, or credit
-          card.
-        </p>
+        <EmptyState
+          icon={Wallet}
+          title="No accounts yet"
+          description="Add your first bank account, cash wallet, or credit card to start tracking balances."
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {accounts.map((account) => (
             <Card
               key={account.id}
               className={cn(
-                "transition-opacity",
+                "hover:ring-foreground/20 transition-all",
                 !account.is_active && "opacity-50"
               )}
             >
               <CardContent className="flex items-start justify-between p-4">
                 <div className="flex items-start gap-3">
                   <span
-                    className="mt-1 h-3 w-3 shrink-0 rounded-full"
+                    className="mt-1.5 h-3 w-3 shrink-0 rounded-full ring-2 ring-white/10"
                     style={{ backgroundColor: account.color ?? "#3b82f6" }}
                   />
                   <div>
@@ -112,7 +114,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
                         </Badge>
                       )}
                     </div>
-                    <p className="mt-2 text-xl font-bold tabular-nums">
+                    <p className="mt-2 text-xl font-bold tracking-tight tabular-nums">
                       {formatCurrency(account.balance)}
                     </p>
                   </div>
@@ -120,7 +122,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground text-xs"
+                  className="text-muted-foreground shrink-0 text-xs"
                   onClick={() => handleToggle(account.id, account.is_active)}
                 >
                   {account.is_active ? "Deactivate" : "Activate"}

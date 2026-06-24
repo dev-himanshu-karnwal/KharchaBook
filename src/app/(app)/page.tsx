@@ -80,10 +80,6 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <SummaryCards summary={summary} />
-      {loanSummaryRes.success && (
-        <LoanSummaryCard summary={loanSummaryRes.data} />
-      )}
-      <RecentActivity items={monthlyActivity} loans={loans} />
       <div className="grid gap-6 lg:grid-cols-2">
         <ExpenseCategoryChart
           initialData={
@@ -92,8 +88,14 @@ export default async function DashboardPage() {
           initialStart={start}
           initialEnd={end}
         />
-        <AccountBalances accounts={accounts} />
+        <div className="space-y-6">
+          <AccountBalances accounts={accounts} />
+          <RecentActivity items={monthlyActivity} loans={loans} />
+        </div>
       </div>
+      {loanSummaryRes.success && (
+        <LoanSummaryCard summary={loanSummaryRes.data} />
+      )}
     </div>
   );
 }

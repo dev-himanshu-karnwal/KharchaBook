@@ -33,7 +33,7 @@ export default function RootLayout({
           jetbrainsMono.variable
         )}
       >
-        <NextTopLoader color="#22c55e" showSpinner={false} />
+        <NextTopLoader color="oklch(0.708 0 0)" showSpinner={false} />
         {children}
         <Toaster richColors position="top-right" />
       </body>

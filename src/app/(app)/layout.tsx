@@ -10,7 +10,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar className="border-border hidden w-64 border-r lg:flex" />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+          <main className="page-enter flex-1 overflow-y-auto p-4 lg:p-6">
+            {children}
+          </main>
         </div>
       </div>
       <TransactionDialog />

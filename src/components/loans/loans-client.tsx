@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, HandCoins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -25,14 +27,22 @@ import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import type { Account, LoanSummary, PersonalLoan } from "@/lib/types";
 import { toast } from "sonner";
 
+type DeleteTarget =
+  | { type: "loan"; id: string; name: string }
+  | { type: "repayment"; id: string };
+
 function LoanCard({
   loan,
   accounts,
   onRefresh,
+  onDeleteLoan,
+  onDeleteRepayment,
 }: {
   loan: PersonalLoan;
   accounts: Account[];
   onRefresh: () => void;
+  onDeleteLoan: (id: string, name: string) => void;
+  onDeleteRepayment: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [repayOpen, setRepayOpen] = useState(false);
@@ -56,28 +66,13 @@ function LoanCard({
     }
   }
 
-  async function handleDeleteLoan() {
-    const result = await deleteLoan(loan.id);
-    if (result.success) {
-      toast.success("Loan deleted");
-      onRefresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
-  async function handleDeleteRepayment(id: string) {
-    const result = await deleteRepayment(id);
-    if (result.success) {
-      toast.success("Repayment deleted");
-      onRefresh();
-    } else {
-      toast.error(result.error);
-    }
-  }
-
   return (
-    <Card className={cn(isSettled && "opacity-60")}>
+    <Card
+      className={cn(
+        "hover:ring-foreground/20 transition-colors",
+        isSettled && "opacity-60"
+      )}
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -151,8 +146,8 @@ function LoanCard({
           <Button
             size="sm"
             variant="ghost"
-            className="text-muted-foreground ml-auto"
-            onClick={handleDeleteLoan}
+            className="text-muted-foreground hover:text-destructive ml-auto"
+            onClick={() => onDeleteLoan(loan.id, loan.person_name)}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
@@ -168,7 +163,7 @@ function LoanCard({
               .map((r) => (
                 <div
                   key={r.id}
-                  className="group flex items-center justify-between rounded-md px-2 py-1.5 text-sm"
+                  className="hover:bg-muted/30 flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors"
                 >
                   <div>
                     <span className="tabular-nums">
@@ -181,10 +176,10 @@ function LoanCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                    onClick={() => handleDeleteRepayment(r.id)}
+                    className="text-muted-foreground hover:text-destructive h-7 w-7"
+                    onClick={() => onDeleteRepayment(r.id)}
                   >
-                    <Trash2 className="text-muted-foreground h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               ))}
@@ -207,6 +202,8 @@ export function LoansClient({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const activeLoans = loans.filter((l) => (l.outstanding_amount ?? 0) > 0);
   const settledLoans = loans.filter((l) => (l.outstanding_amount ?? 0) <= 0);
@@ -225,21 +222,48 @@ export function LoansClient({
     }
   }
 
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+
+    const result =
+      deleteTarget.type === "loan"
+        ? await deleteLoan(deleteTarget.id)
+        : await deleteRepayment(deleteTarget.id);
+
+    setDeleting(false);
+
+    if (result.success) {
+      toast.success(
+        deleteTarget.type === "loan" ? "Loan deleted" : "Repayment deleted"
+      );
+      setDeleteTarget(null);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  const deleteDescription =
+    deleteTarget?.type === "loan"
+      ? `The loan to ${deleteTarget.name} and all its repayments will be permanently removed.`
+      : "This repayment will be permanently removed and the loan balance will be updated.";
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
+        <Card className="hover:ring-foreground/20 transition-colors">
           <CardContent className="p-4">
             <p className="text-muted-foreground text-sm">Owed to You</p>
-            <p className="text-2xl font-bold text-emerald-400 tabular-nums">
+            <p className="text-2xl font-bold tracking-tight text-emerald-400 tabular-nums">
               {formatCurrency(summary.owedToYou)}
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="hover:ring-foreground/20 transition-colors">
           <CardContent className="p-4">
             <p className="text-muted-foreground text-sm">You Owe</p>
-            <p className="text-2xl font-bold text-amber-400 tabular-nums">
+            <p className="text-2xl font-bold tracking-tight text-amber-400 tabular-nums">
               {formatCurrency(summary.youOwe)}
             </p>
           </CardContent>
@@ -269,16 +293,26 @@ export function LoansClient({
         </Dialog>
       </div>
 
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Are you sure?"
+        description={deleteDescription}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+      />
+
       {loans.length === 0 && (
-        <p className="text-muted-foreground py-16 text-center text-sm">
-          No loans recorded yet. Track money lent to or borrowed from friends
-          and family without counting it as expense or income.
-        </p>
+        <EmptyState
+          icon={HandCoins}
+          title="No loans recorded"
+          description="Track money lent to or borrowed from friends and family without counting it as expense or income."
+        />
       )}
 
       {activeLoans.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+          <h2 className="text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase">
             Active
           </h2>
           {activeLoans.map((loan) => (
@@ -287,6 +321,12 @@ export function LoansClient({
               loan={loan}
               accounts={accounts}
               onRefresh={() => router.refresh()}
+              onDeleteLoan={(id, name) =>
+                setDeleteTarget({ type: "loan", id, name })
+              }
+              onDeleteRepayment={(id) =>
+                setDeleteTarget({ type: "repayment", id })
+              }
             />
           ))}
         </div>
@@ -294,7 +334,7 @@ export function LoansClient({
 
       {settledLoans.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+          <h2 className="text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase">
             Settled
           </h2>
           {settledLoans.map((loan) => (
@@ -303,6 +343,12 @@ export function LoansClient({
               loan={loan}
               accounts={accounts}
               onRefresh={() => router.refresh()}
+              onDeleteLoan={(id, name) =>
+                setDeleteTarget({ type: "loan", id, name })
+              }
+              onDeleteRepayment={(id) =>
+                setDeleteTarget({ type: "repayment", id })
+              }
             />
           ))}
         </div>

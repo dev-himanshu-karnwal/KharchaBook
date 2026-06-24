@@ -45,7 +45,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
         {accounts.map((account) => (
           <div
             key={account.id}
-            className="hover:bg-muted/50 flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors"
+            className="hover:bg-muted/50 -mx-2 flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors"
           >
             <div className="flex items-center gap-3">
               <span

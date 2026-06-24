@@ -1,10 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { Search, X } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,7 @@ import {
   type ActivityTypeFilter,
 } from "@/lib/activity-feed";
 import type { Account, Category } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const TYPE_OPTIONS: { value: ActivityTypeFilter; label: string }[] = [
   { value: "all", label: "All types" },
@@ -87,6 +89,7 @@ export function TransactionToolbar({
   totalCount,
   filteredCount,
 }: TransactionToolbarProps) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const sortValue = `${filters.sortField}-${filters.sortDir}`;
   const showClear =
     filters.search.trim() !== "" ||
@@ -98,155 +101,191 @@ export function TransactionToolbar({
     filters.sortField !== DEFAULT_ACTIVITY_FILTERS.sortField ||
     filters.sortDir !== DEFAULT_ACTIVITY_FILTERS.sortDir;
 
+  const activeFilterCount = [
+    filters.type !== "all",
+    filters.accountId !== "",
+    filters.categoryId !== "",
+    filters.dateFrom !== "",
+    filters.dateTo !== "",
+    filters.sortField !== DEFAULT_ACTIVITY_FILTERS.sortField ||
+      filters.sortDir !== DEFAULT_ACTIVITY_FILTERS.sortDir,
+  ].filter(Boolean).length;
+
   function patch(partial: Partial<ActivityFilters>) {
     onChange({ ...filters, ...partial });
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <FilterField
-          label="Search"
-          htmlFor="txn-search"
-          className="min-w-0 flex-1 space-y-1.5"
-        >
-          <div className="relative">
-            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
-            <Input
-              id="txn-search"
-              type="search"
-              placeholder="Description, person, account..."
-              value={filters.search}
-              onChange={(e) => patch({ search: e.target.value })}
-              className="pl-8"
-            />
-          </div>
-        </FilterField>
-        <p className="text-muted-foreground shrink-0 pb-2 text-xs tabular-nums">
-          {filteredCount === totalCount
-            ? `${totalCount} item${totalCount === 1 ? "" : "s"}`
-            : `${filteredCount} of ${totalCount}`}
-        </p>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        <FilterField label="Type">
-          <Select
-            value={filters.type}
-            onValueChange={(v) => v && patch({ type: v as ActivityTypeFilter })}
+    <Card size="sm">
+      <CardContent className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <FilterField
+            label="Search"
+            htmlFor="txn-search"
+            className="min-w-0 flex-1 space-y-1.5"
           >
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TYPE_OPTIONS.map((t) => (
-                <SelectItem key={t.value} value={t.value}>
-                  {t.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterField>
-
-        <FilterField label="Account">
-          <Select
-            value={filters.accountId || "all"}
-            onValueChange={(v) =>
-              patch({ accountId: v === "all" ? "" : (v ?? "") })
-            }
-          >
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue placeholder="All accounts" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All accounts</SelectItem>
-              {accounts.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterField>
-
-        <FilterField label="Category">
-          <Select
-            value={filters.categoryId || "all"}
-            onValueChange={(v) =>
-              patch({ categoryId: v === "all" ? "" : (v ?? "") })
-            }
-          >
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue placeholder="All categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterField>
-
-        <FilterField label="Sort by">
-          <Select
-            value={sortValue}
-            onValueChange={(v) => {
-              const option = SORT_OPTIONS.find((o) => o.value === v);
-              if (option)
-                patch({ sortField: option.field, sortDir: option.dir });
-            }}
-          >
-            <SelectTrigger size="sm" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterField>
-
-        <FilterField label="From" htmlFor="txn-date-from">
-          <Input
-            id="txn-date-from"
-            type="date"
-            value={filters.dateFrom}
-            onChange={(e) => patch({ dateFrom: e.target.value })}
-            className="w-full"
-          />
-        </FilterField>
-
-        <FilterField label="To" htmlFor="txn-date-to">
-          <Input
-            id="txn-date-to"
-            type="date"
-            value={filters.dateTo}
-            onChange={(e) => patch({ dateTo: e.target.value })}
-            className="w-full"
-          />
-        </FilterField>
-
-        {showClear && (
-          <div className="flex items-end sm:col-span-2 lg:col-span-1">
+            <div className="relative">
+              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
+              <Input
+                id="txn-search"
+                type="search"
+                placeholder="Description, person, account..."
+                value={filters.search}
+                onChange={(e) => patch({ search: e.target.value })}
+                className="pl-8"
+              />
+            </div>
+          </FilterField>
+          <div className="flex items-center gap-2 pb-0.5 sm:pb-2">
+            <p className="text-muted-foreground shrink-0 text-xs tabular-nums">
+              {filteredCount === totalCount
+                ? `${totalCount} item${totalCount === 1 ? "" : "s"}`
+                : `${filteredCount} of ${totalCount}`}
+            </p>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 w-full gap-1"
-              onClick={() => onChange(DEFAULT_ACTIVITY_FILTERS)}
+              className="h-8 gap-1.5 lg:hidden"
+              onClick={() => setFiltersOpen(!filtersOpen)}
             >
-              <X className="h-3.5 w-3.5" />
-              Clear filters
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-medium">
+                  {activeFilterCount}
+                </span>
+              )}
             </Button>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+
+        <div
+          className={cn(
+            "grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7",
+            !filtersOpen && "hidden lg:grid"
+          )}
+        >
+          <FilterField label="Type">
+            <Select
+              value={filters.type}
+              onValueChange={(v) =>
+                v && patch({ type: v as ActivityTypeFilter })
+              }
+            >
+              <SelectTrigger size="sm" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TYPE_OPTIONS.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Account">
+            <Select
+              value={filters.accountId || "all"}
+              onValueChange={(v) =>
+                patch({ accountId: v === "all" ? "" : (v ?? "") })
+              }
+            >
+              <SelectTrigger size="sm" className="w-full">
+                <SelectValue placeholder="All accounts" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All accounts</SelectItem>
+                {accounts.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Category">
+            <Select
+              value={filters.categoryId || "all"}
+              onValueChange={(v) =>
+                patch({ categoryId: v === "all" ? "" : (v ?? "") })
+              }
+            >
+              <SelectTrigger size="sm" className="w-full">
+                <SelectValue placeholder="All categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="Sort by">
+            <Select
+              value={sortValue}
+              onValueChange={(v) => {
+                const option = SORT_OPTIONS.find((o) => o.value === v);
+                if (option)
+                  patch({ sortField: option.field, sortDir: option.dir });
+              }}
+            >
+              <SelectTrigger size="sm" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+
+          <FilterField label="From" htmlFor="txn-date-from">
+            <Input
+              id="txn-date-from"
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => patch({ dateFrom: e.target.value })}
+              className="w-full"
+            />
+          </FilterField>
+
+          <FilterField label="To" htmlFor="txn-date-to">
+            <Input
+              id="txn-date-to"
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => patch({ dateTo: e.target.value })}
+              className="w-full"
+            />
+          </FilterField>
+
+          {showClear && (
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-full gap-1"
+                onClick={() => onChange(DEFAULT_ACTIVITY_FILTERS)}
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
