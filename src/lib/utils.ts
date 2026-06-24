@@ -29,15 +29,43 @@ export function formatDateShort(date: string | Date): string {
   }).format(new Date(date));
 }
 
-export function getMonthRange(date = new Date()) {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+const APP_TIMEZONE = "Asia/Kolkata";
+
+function getDatePartsInTimezone(date: Date, timeZone: string = APP_TIMEZONE) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value);
   return {
-    start: start.toISOString().split("T")[0],
-    end: end.toISOString().split("T")[0],
+    year: value("year"),
+    month: value("month"),
+    day: value("day"),
   };
 }
 
+function formatISODate(year: number, month: number, day: number): string {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export function toISODate(date: Date = new Date()): string {
-  return date.toISOString().split("T")[0];
+  const { year, month, day } = getDatePartsInTimezone(date);
+  return formatISODate(year, month, day);
+}
+
+export function addDays(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const date = new Date(y, m - 1, d + days);
+  return formatISODate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
+export function getMonthRange(date = new Date()) {
+  const { year, month } = getDatePartsInTimezone(date);
+  const start = formatISODate(year, month, 1);
+  const lastDay = new Date(year, month, 0).getDate();
+  const end = formatISODate(year, month, lastDay);
+  return { start, end };
 }

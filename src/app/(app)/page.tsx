@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import { getMonthRange } from "@/lib/utils";
+import { addDays, getMonthRange, toISODate } from "@/lib/utils";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { UpcomingRecurring } from "@/components/dashboard/upcoming-recurring";
@@ -14,10 +14,8 @@ import type {
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { start, end } = getMonthRange();
-  const today = new Date().toISOString().split("T")[0];
-  const next30 = new Date(Date.now() + 30 * 86400000)
-    .toISOString()
-    .split("T")[0];
+  const today = toISODate();
+  const next30 = addDays(today, 30);
 
   const [accountsRes, incomeRes, expenseRes, recentRes, upcomingRes] =
     await Promise.all([
