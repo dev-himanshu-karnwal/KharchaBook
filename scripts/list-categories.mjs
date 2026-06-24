@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * List all categories from Supabase with transaction/recurring usage.
+ * List all categories from Supabase with transaction usage.
  *
  * Usage:
  *   pnpm categories:list
@@ -38,17 +38,8 @@ console.log(`\nKharchaBook categories (${categories.length} total)\n`);
 function printSection(title, rows) {
   console.log(`=== ${title} (${rows.length}) ===\n`);
 
-  const headers = [
-    "sort",
-    "name",
-    "icon",
-    "color",
-    "system",
-    "txns",
-    "rec",
-    "id",
-  ];
-  const widths = [4, 22, 16, 8, 6, 4, 3, 36];
+  const headers = ["sort", "name", "icon", "color", "system", "txns", "id"];
+  const widths = [4, 22, 16, 8, 6, 4, 36];
 
   console.log(headers.map((h, i) => pad(h, widths[i])).join("  "));
   console.log(widths.map((w) => "-".repeat(w)).join("  "));
@@ -62,8 +53,7 @@ function printSection(title, rows) {
         pad(row.color ?? "-", widths[3]),
         pad(row.is_system ? "yes" : "no", widths[4]),
         pad(row.transaction_count ?? 0, widths[5]),
-        pad(row.recurring_count ?? 0, widths[6]),
-        pad(row.id, widths[7]),
+        pad(row.id, widths[6]),
       ].join("  ")
     );
   }
@@ -79,7 +69,7 @@ if (custom.length > 0) {
   console.log(`Custom user categories: ${custom.length}`);
   for (const row of custom) {
     console.log(
-      `  - ${row.name} (${row.type}) txns=${row.transaction_count} recurring=${row.recurring_count} [${row.id}]`
+      `  - ${row.name} (${row.type}) txns=${row.transaction_count} [${row.id}]`
     );
   }
   console.log("");
@@ -97,7 +87,6 @@ console.log(
       is_system: row.is_system,
       sort_order: row.sort_order,
       transaction_count: Number(row.transaction_count ?? 0),
-      recurring_count: Number(row.recurring_count ?? 0),
     })),
     null,
     2

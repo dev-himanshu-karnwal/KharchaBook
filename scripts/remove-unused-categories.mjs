@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Remove categories not referenced by any transaction or recurring rule.
+ * Remove categories not referenced by any transaction.
  *
  * Usage:
  *   pnpm categories:prune-unused              # dry run (default)

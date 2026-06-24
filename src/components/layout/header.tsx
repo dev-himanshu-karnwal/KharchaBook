@@ -17,7 +17,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/transactions": "Transactions",
   "/accounts": "Accounts",
   "/categories": "Categories",
-  "/recurring": "Recurring",
 };
 
 export function Header() {

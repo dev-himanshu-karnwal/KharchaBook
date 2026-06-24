@@ -1,8 +1,6 @@
 -- One-time setup for category scripts (publishable key only).
 -- Paste into Supabase Dashboard → SQL Editor → Run.
 
--- Same as supabase/migrations/20260624000000_category_maintenance_rpcs.sql
-
 CREATE OR REPLACE FUNCTION public.list_categories_with_usage()
 RETURNS TABLE (
   id uuid,
@@ -14,8 +12,7 @@ RETURNS TABLE (
   sort_order int,
   user_id uuid,
   created_at timestamptz,
-  transaction_count bigint,
-  recurring_count bigint
+  transaction_count bigint
 )
 LANGUAGE sql
 STABLE
@@ -32,11 +29,9 @@ AS $$
     c.sort_order,
     c.user_id,
     c.created_at,
-    COUNT(DISTINCT t.id) AS transaction_count,
-    COUNT(DISTINCT r.id) AS recurring_count
+    COUNT(DISTINCT t.id) AS transaction_count
   FROM public.categories c
   LEFT JOIN public.transactions t ON t.category_id = c.id
-  LEFT JOIN public.recurring_transactions r ON r.category_id = c.id
   GROUP BY c.id
   ORDER BY c.type, c.sort_order, c.name;
 $$;
@@ -68,9 +63,6 @@ BEGIN
   FROM public.categories c
   WHERE NOT EXISTS (
     SELECT 1 FROM public.transactions t WHERE t.category_id = c.id
-  )
-  AND NOT EXISTS (
-    SELECT 1 FROM public.recurring_transactions r WHERE r.category_id = c.id
   );
 
   IF NOT p_apply THEN
@@ -86,9 +78,6 @@ BEGIN
   DELETE FROM public.categories c
   WHERE NOT EXISTS (
     SELECT 1 FROM public.transactions t WHERE t.category_id = c.id
-  )
-  AND NOT EXISTS (
-    SELECT 1 FROM public.recurring_transactions r WHERE r.category_id = c.id
   );
 
   GET DIAGNOSTICS deleted_count = ROW_COUNT;

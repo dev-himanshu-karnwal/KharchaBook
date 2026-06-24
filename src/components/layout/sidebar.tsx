@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Wallet,
-  Repeat,
   Tags,
   LogOut,
 } from "lucide-react";
@@ -20,7 +19,6 @@ const NAV_ITEMS = [
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/accounts", label: "Accounts", icon: Wallet },
   { href: "/categories", label: "Categories", icon: Tags },
-  { href: "/recurring", label: "Recurring", icon: Repeat },
 ] as const;
 
 export function Sidebar({ className }: { className?: string }) {
