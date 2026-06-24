@@ -14,7 +14,7 @@ function computeNextDueDate(startDate: string, frequency: Frequency): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  let next = new Date(start);
+  const next = new Date(start);
 
   while (next < today) {
     switch (frequency) {
