@@ -25,19 +25,26 @@ export function TransactionDialog() {
   const [dataLoading, setDataLoading] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    function fetchData() {
+      if (!open) return;
 
-    setDataLoading(true);
-    const supabase = createClient();
-    Promise.all([
-      supabase.from("accounts").select("*").eq("is_active", true).order("name"),
-      supabase.from("categories").select("*").order("sort_order"),
-    ])
-      .then(([{ data: a }, { data: c }]) => {
-        setAccounts((a as Account[]) ?? []);
-        setCategories((c as Category[]) ?? []);
-      })
-      .finally(() => setDataLoading(false));
+      setDataLoading(true);
+      const supabase = createClient();
+      Promise.all([
+        supabase
+          .from("accounts")
+          .select("*")
+          .eq("is_active", true)
+          .order("name"),
+        supabase.from("categories").select("*").order("sort_order"),
+      ])
+        .then(([{ data: a }, { data: c }]) => {
+          setAccounts((a as Account[]) ?? []);
+          setCategories((c as Category[]) ?? []);
+        })
+        .finally(() => setDataLoading(false));
+    }
+    fetchData();
   }, [open]);
 
   async function handleSubmit(data: CreateTransactionInput) {
