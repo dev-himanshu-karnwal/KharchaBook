@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -12,85 +13,93 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { deleteTransaction, updateTransaction } from "@/actions/transactions";
+import { deleteLoan, deleteRepayment } from "@/actions/loans";
 import { TransactionEditForm } from "./transaction-edit-form";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type {
   Account,
   Category,
+  PersonalLoan,
   Transaction,
   UpdateTransactionInput,
 } from "@/lib/types";
 import {
-  DEFAULT_TRANSACTION_FILTERS,
-  filterTransactions,
-  groupByDate,
-  hasActiveFilters,
-  sortTransactions,
-  type TransactionFilters,
-} from "@/lib/transaction-filters";
+  DEFAULT_ACTIVITY_FILTERS,
+  activityAmountColor,
+  activityAmountPrefix,
+  activityTypeLabel,
+  buildActivityFeed,
+  filterActivity,
+  getSignedAmount,
+  groupActivityByDate,
+  hasActiveActivityFilters,
+  sortActivity,
+  type ActivityFilters,
+  type ActivityItem,
+} from "@/lib/activity-feed";
 import { TransactionToolbar } from "./transaction-toolbar";
 
-function TransactionRow({
-  txn,
+function ActivityRow({
+  item,
+  signedAmount,
   onEdit,
   onDelete,
 }: {
-  txn: Transaction;
+  item: ActivityItem;
+  signedAmount: number;
   onEdit: (txn: Transaction) => void;
-  onDelete: (id: string) => void;
+  onDelete: (item: ActivityItem) => void;
 }) {
+  const isLoan =
+    item.displayType === "loan_lent" ||
+    item.displayType === "loan_borrowed" ||
+    item.displayType === "loan_repayment";
+
   return (
     <div className="group hover:border-border hover:bg-muted/30 flex items-center justify-between rounded-lg border border-transparent px-3 py-2.5 transition-colors">
       <div className="flex items-center gap-3">
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{
-            backgroundColor: txn.category?.color ?? "#888",
-          }}
+          style={{ backgroundColor: item.color }}
         />
         <div>
-          <p className="text-sm font-medium">
-            {txn.description || txn.category?.name || txn.type}
-          </p>
-          <p className="text-muted-foreground text-xs">
-            {txn.account?.name}
-            {txn.type === "transfer" && txn.transfer_to_account && (
-              <> &rarr; {txn.transfer_to_account.name}</>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium">{item.title}</p>
+            {isLoan && (
+              <Badge variant="outline" className="text-[10px] text-violet-400">
+                {activityTypeLabel(item)}
+              </Badge>
             )}
-            {txn.category && txn.description && (
-              <> &middot; {txn.category.name}</>
-            )}
-          </p>
+          </div>
+          <p className="text-muted-foreground text-xs">{item.subtitle}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
         <span
           className={cn(
             "text-sm font-semibold tabular-nums",
-            txn.type === "income"
-              ? "text-emerald-400"
-              : txn.type === "expense"
-                ? "text-red-400"
-                : "text-blue-400"
+            activityAmountColor(item)
           )}
         >
-          {txn.type === "income" ? "+" : txn.type === "expense" ? "-" : ""}
-          {formatCurrency(txn.amount)}
+          {activityAmountPrefix(item, signedAmount)}
+          {formatCurrency(Math.abs(signedAmount))}
         </span>
+        {item.kind === "transaction" && item.transaction && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+            onClick={() => onEdit(item.transaction!)}
+          >
+            <Pencil className="text-muted-foreground h-3.5 w-3.5" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
           className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-          onClick={() => onEdit(txn)}
-        >
-          <Pencil className="text-muted-foreground h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-          onClick={() => onDelete(txn.id)}
+          onClick={() => onDelete(item)}
         >
           <Trash2 className="text-muted-foreground h-3.5 w-3.5" />
         </Button>
@@ -99,22 +108,29 @@ function TransactionRow({
   );
 }
 
-function filtersFromSearchParams(params: URLSearchParams): TransactionFilters {
+function filtersFromSearchParams(params: URLSearchParams): ActivityFilters {
   const uncategorized = params.get("uncategorized");
   const categoryId =
     params.get("categoryId") ??
     (uncategorized ? `uncategorized-${uncategorized}` : "");
 
   const typeParam = params.get("type");
+  const validTypes = [
+    "income",
+    "expense",
+    "transfer",
+    "loan",
+    "loan_lent",
+    "loan_borrowed",
+    "loan_repayment",
+  ] as const;
   const type =
-    typeParam === "income" ||
-    typeParam === "expense" ||
-    typeParam === "transfer"
-      ? typeParam
+    typeParam && validTypes.includes(typeParam as (typeof validTypes)[number])
+      ? (typeParam as ActivityFilters["type"])
       : "all";
 
   return {
-    ...DEFAULT_TRANSACTION_FILTERS,
+    ...DEFAULT_ACTIVITY_FILTERS,
     categoryId,
     type,
     dateFrom: params.get("dateFrom") ?? "",
@@ -124,30 +140,37 @@ function filtersFromSearchParams(params: URLSearchParams): TransactionFilters {
 
 export function TransactionList({
   transactions,
+  loans,
   accounts,
   categories,
 }: {
   transactions: Transaction[];
+  loans: PersonalLoan[];
   accounts: Account[];
   categories: Category[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [filters, setFilters] = useState<TransactionFilters>(() =>
+  const [filters, setFilters] = useState<ActivityFilters>(() =>
     filtersFromSearchParams(searchParams)
   );
   const [editingTxn, setEditingTxn] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const allItems = useMemo(
+    () => buildActivityFeed(transactions, loans),
+    [transactions, loans]
+  );
+
   const filtered = useMemo(() => {
-    const matched = filterTransactions(transactions, filters);
-    return sortTransactions(matched, filters.sortField, filters.sortDir);
-  }, [transactions, filters]);
+    const matched = filterActivity(allItems, filters);
+    return sortActivity(matched, filters.sortField, filters.sortDir, loans);
+  }, [allItems, filters, loans]);
 
   const grouped = useMemo(
     () =>
       filters.sortField === "date"
-        ? groupByDate(filtered, filters.sortDir)
+        ? groupActivityByDate(filtered, filters.sortDir)
         : null,
     [filtered, filters.sortField, filters.sortDir]
   );
@@ -167,17 +190,28 @@ export function TransactionList({
     }
   }
 
-  async function handleDelete(id: string) {
-    const result = await deleteTransaction(id);
+  async function handleDelete(item: ActivityItem) {
+    let result;
+    if (item.kind === "transaction" && item.transaction) {
+      result = await deleteTransaction(item.transaction.id);
+    } else if (item.kind === "loan" && item.loanId) {
+      result = await deleteLoan(item.loanId);
+    } else if (item.kind === "repayment") {
+      const repaymentId = item.id.replace("repayment-", "");
+      result = await deleteRepayment(repaymentId);
+    } else {
+      return;
+    }
+
     if (result.success) {
-      toast.success("Transaction deleted");
+      toast.success("Deleted");
       router.refresh();
     } else {
       toast.error(result.error);
     }
   }
 
-  const emptyAll = transactions.length === 0;
+  const emptyAll = allItems.length === 0;
   const emptyFiltered = !emptyAll && filtered.length === 0;
 
   return (
@@ -208,28 +242,28 @@ export function TransactionList({
           onChange={setFilters}
           accounts={accounts}
           categories={categories}
-          totalCount={transactions.length}
+          totalCount={allItems.length}
           filteredCount={filtered.length}
         />
       )}
 
       {emptyAll && (
         <p className="text-muted-foreground py-16 text-center text-sm">
-          No transactions found. Start by adding your first transaction.
+          No activity yet. Add a transaction or record a loan to get started.
         </p>
       )}
 
       {emptyFiltered && (
         <div className="py-16 text-center">
           <p className="text-muted-foreground text-sm">
-            No transactions match your filters.
+            No items match your filters.
           </p>
-          {hasActiveFilters(filters) && (
+          {hasActiveActivityFilters(filters) && (
             <Button
               variant="link"
               size="sm"
               className="mt-2"
-              onClick={() => setFilters(DEFAULT_TRANSACTION_FILTERS)}
+              onClick={() => setFilters(DEFAULT_ACTIVITY_FILTERS)}
             >
               Clear filters
             </Button>
@@ -238,16 +272,17 @@ export function TransactionList({
       )}
 
       {grouped &&
-        grouped.map(([date, txns]) => (
+        grouped.map(([date, items]) => (
           <div key={date}>
             <h3 className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
               {formatDate(date)}
             </h3>
             <div className="space-y-1">
-              {txns.map((txn) => (
-                <TransactionRow
-                  key={txn.id}
-                  txn={txn}
+              {items.map((item) => (
+                <ActivityRow
+                  key={item.id}
+                  item={item}
+                  signedAmount={getSignedAmount(item, loans)}
                   onEdit={setEditingTxn}
                   onDelete={handleDelete}
                 />
@@ -258,10 +293,11 @@ export function TransactionList({
 
       {!grouped && filtered.length > 0 && (
         <div className="space-y-1">
-          {filtered.map((txn) => (
-            <TransactionRow
-              key={txn.id}
-              txn={txn}
+          {filtered.map((item) => (
+            <ActivityRow
+              key={item.id}
+              item={item}
+              signedAmount={getSignedAmount(item, loans)}
               onEdit={setEditingTxn}
               onDelete={handleDelete}
             />

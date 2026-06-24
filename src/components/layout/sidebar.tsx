@@ -8,6 +8,7 @@ import {
   ArrowLeftRight,
   Wallet,
   Tags,
+  HandCoins,
   LogOut,
 } from "lucide-react";
 import { logout } from "@/actions/auth";
@@ -17,6 +18,7 @@ import { useRouter } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/loans", label: "Loans", icon: HandCoins },
   { href: "/accounts", label: "Accounts", icon: Wallet },
   { href: "/categories", label: "Categories", icon: Tags },
 ] as const;

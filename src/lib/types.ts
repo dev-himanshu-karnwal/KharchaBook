@@ -77,3 +77,56 @@ export interface CreateAccountInput {
   balance: number;
   color: string | null;
 }
+
+export type LoanDirection = "lent" | "borrowed";
+
+export interface PersonalLoan {
+  id: string;
+  user_id: string;
+  account_id: string;
+  person_name: string;
+  direction: LoanDirection;
+  amount: number;
+  date: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  account?: Account;
+  repayments?: LoanRepayment[];
+  repaid_amount?: number;
+  outstanding_amount?: number;
+}
+
+export interface LoanRepayment {
+  id: string;
+  user_id: string;
+  loan_id: string;
+  account_id: string;
+  amount: number;
+  date: string;
+  description: string | null;
+  created_at: string;
+  account?: Account;
+}
+
+export interface LoanSummary {
+  owedToYou: number;
+  youOwe: number;
+}
+
+export interface CreateLoanInput {
+  account_id: string;
+  person_name: string;
+  direction: LoanDirection;
+  amount: number;
+  date: string;
+  description: string | null;
+}
+
+export interface CreateRepaymentInput {
+  loan_id: string;
+  account_id: string;
+  amount: number;
+  date: string;
+  description: string | null;
+}

@@ -13,25 +13,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  DEFAULT_TRANSACTION_FILTERS,
-  type TransactionFilters,
-  type TransactionSortField,
-  type TransactionSortDir,
-} from "@/lib/transaction-filters";
-import type { Account, Category, TransactionType } from "@/lib/types";
+  DEFAULT_ACTIVITY_FILTERS,
+  type ActivityFilters,
+  type ActivitySortField,
+  type ActivitySortDir,
+  type ActivityTypeFilter,
+} from "@/lib/activity-feed";
+import type { Account, Category } from "@/lib/types";
 
-const TYPE_OPTIONS: { value: TransactionType | "all"; label: string }[] = [
+const TYPE_OPTIONS: { value: ActivityTypeFilter; label: string }[] = [
   { value: "all", label: "All types" },
   { value: "expense", label: "Expense" },
   { value: "income", label: "Income" },
   { value: "transfer", label: "Transfer" },
+  { value: "loan", label: "Loans" },
+  { value: "loan_lent", label: "Loan · Lent" },
+  { value: "loan_borrowed", label: "Loan · Borrowed" },
+  { value: "loan_repayment", label: "Loan · Repayment" },
 ];
 
 const SORT_OPTIONS: {
-  value: `${TransactionSortField}-${TransactionSortDir}`;
+  value: `${ActivitySortField}-${ActivitySortDir}`;
   label: string;
-  field: TransactionSortField;
-  dir: TransactionSortDir;
+  field: ActivitySortField;
+  dir: ActivitySortDir;
 }[] = [
   { value: "date-desc", label: "Date (newest)", field: "date", dir: "desc" },
   { value: "date-asc", label: "Date (oldest)", field: "date", dir: "asc" },
@@ -45,8 +50,8 @@ const SORT_OPTIONS: {
 ];
 
 interface TransactionToolbarProps {
-  filters: TransactionFilters;
-  onChange: (filters: TransactionFilters) => void;
+  filters: ActivityFilters;
+  onChange: (filters: ActivityFilters) => void;
   accounts: Account[];
   categories: Category[];
   totalCount: number;
@@ -90,10 +95,10 @@ export function TransactionToolbar({
     filters.categoryId !== "" ||
     filters.dateFrom !== "" ||
     filters.dateTo !== "" ||
-    filters.sortField !== DEFAULT_TRANSACTION_FILTERS.sortField ||
-    filters.sortDir !== DEFAULT_TRANSACTION_FILTERS.sortDir;
+    filters.sortField !== DEFAULT_ACTIVITY_FILTERS.sortField ||
+    filters.sortDir !== DEFAULT_ACTIVITY_FILTERS.sortDir;
 
-  function patch(partial: Partial<TransactionFilters>) {
+  function patch(partial: Partial<ActivityFilters>) {
     onChange({ ...filters, ...partial });
   }
 
@@ -110,7 +115,7 @@ export function TransactionToolbar({
             <Input
               id="txn-search"
               type="search"
-              placeholder="Description, category, account..."
+              placeholder="Description, person, account..."
               value={filters.search}
               onChange={(e) => patch({ search: e.target.value })}
               className="pl-8"
@@ -119,7 +124,7 @@ export function TransactionToolbar({
         </FilterField>
         <p className="text-muted-foreground shrink-0 pb-2 text-xs tabular-nums">
           {filteredCount === totalCount
-            ? `${totalCount} transaction${totalCount === 1 ? "" : "s"}`
+            ? `${totalCount} item${totalCount === 1 ? "" : "s"}`
             : `${filteredCount} of ${totalCount}`}
         </p>
       </div>
@@ -128,9 +133,7 @@ export function TransactionToolbar({
         <FilterField label="Type">
           <Select
             value={filters.type}
-            onValueChange={(v) =>
-              v && patch({ type: v as TransactionType | "all" })
-            }
+            onValueChange={(v) => v && patch({ type: v as ActivityTypeFilter })}
           >
             <SelectTrigger size="sm" className="w-full">
               <SelectValue />
@@ -236,7 +239,7 @@ export function TransactionToolbar({
               variant="outline"
               size="sm"
               className="h-8 w-full gap-1"
-              onClick={() => onChange(DEFAULT_TRANSACTION_FILTERS)}
+              onClick={() => onChange(DEFAULT_ACTIVITY_FILTERS)}
             >
               <X className="h-3.5 w-3.5" />
               Clear filters
