@@ -38,10 +38,12 @@ export function ActivityRow({
   const isLoan =
     item.displayType === "loan_lent" ||
     item.displayType === "loan_borrowed" ||
-    item.displayType === "loan_repayment";
+    item.displayType === "loan_repayment" ||
+    item.displayType === "loan_write_off";
 
   const hasActions =
-    onDelete || (onEdit && item.kind === "transaction" && item.transaction);
+    (onDelete && item.kind !== "write_off") ||
+    (onEdit && item.kind === "transaction" && item.transaction);
 
   return (
     <div
@@ -94,8 +96,16 @@ export function ActivityRow({
             activityAmountColor(item)
           )}
         >
-          {activityAmountPrefix(item, signedAmount)}
-          {formatCurrency(Math.abs(signedAmount))}
+          {item.affectsBalance ? (
+            <>
+              {activityAmountPrefix(item, signedAmount)}
+              {formatCurrency(Math.abs(signedAmount))}
+            </>
+          ) : (
+            <span className="text-orange-400">
+              {formatCurrency(item.amount)} written off
+            </span>
+          )}
         </span>
 
         {hasActions && (

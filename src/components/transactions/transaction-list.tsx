@@ -54,6 +54,7 @@ function filtersFromSearchParams(params: URLSearchParams): ActivityFilters {
     "loan_lent",
     "loan_borrowed",
     "loan_repayment",
+    "loan_write_off",
   ] as const;
   const type =
     typeParam && validTypes.includes(typeParam as (typeof validTypes)[number])
@@ -74,7 +75,10 @@ function deleteDescription(item: ActivityItem): string {
     return "This transaction will be permanently removed and account balances will be updated.";
   }
   if (item.kind === "loan") {
-    return "This loan and all its repayments will be permanently removed.";
+    return "This loan and all its repayments will be permanently removed and account balances will be reversed.";
+  }
+  if (item.kind === "write_off") {
+    return "Written-off records cannot be deleted. Restore the loan from the Loans page if needed.";
   }
   return "This repayment will be permanently removed and the loan balance will be updated.";
 }
@@ -138,6 +142,12 @@ export function TransactionList({
     setDeleting(true);
 
     let result;
+    if (deletingItem.kind === "write_off") {
+      toast.error("Restore the loan from the Loans page instead of deleting.");
+      setDeleting(false);
+      setDeletingItem(null);
+      return;
+    }
     if (deletingItem.kind === "transaction" && deletingItem.transaction) {
       result = await deleteTransaction(deletingItem.transaction.id);
     } else if (deletingItem.kind === "loan" && deletingItem.loanId) {

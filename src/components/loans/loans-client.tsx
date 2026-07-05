@@ -22,8 +22,11 @@ import {
   createRepayment,
   deleteLoan,
   deleteRepayment,
+  writeOffLoan,
+  undoWriteOffLoan,
 } from "@/actions/loans";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { loanWriteOffLabel } from "@/lib/activity-feed";
 import type { Account, LoanSummary, PersonalLoan } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -31,25 +34,37 @@ type DeleteTarget =
   | { type: "loan"; id: string; name: string }
   | { type: "repayment"; id: string };
 
+type WriteOffTarget = {
+  id: string;
+  name: string;
+  direction: PersonalLoan["direction"];
+  outstanding: number;
+};
+
 function LoanCard({
   loan,
   accounts,
   onRefresh,
   onDeleteLoan,
   onDeleteRepayment,
+  onWriteOff,
+  onUndoWriteOff,
 }: {
   loan: PersonalLoan;
   accounts: Account[];
   onRefresh: () => void;
   onDeleteLoan: (id: string, name: string) => void;
   onDeleteRepayment: (id: string) => void;
+  onWriteOff: (loan: PersonalLoan) => void;
+  onUndoWriteOff: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [repayOpen, setRepayOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const outstanding = loan.outstanding_amount ?? 0;
-  const isSettled = outstanding <= 0;
+  const isSettled = outstanding <= 0 && !loan.is_written_off;
+  const isWrittenOff = loan.is_written_off;
   const repayments = loan.repayments ?? [];
 
   async function handleRepayment(data: Parameters<typeof createRepayment>[0]) {
@@ -84,17 +99,25 @@ function LoanCard({
                 {loan.direction === "lent" ? "Lent" : "Borrowed"}
               </Badge>
               {isSettled && <Badge variant="outline">Settled</Badge>}
+              {isWrittenOff && (
+                <Badge variant="destructive">
+                  {loanWriteOffLabel(loan.direction)}
+                </Badge>
+              )}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
               {formatDate(loan.date)} · {loan.account?.name}
               {loan.description && <> · {loan.description}</>}
+              {isWrittenOff && loan.written_off_amount != null && (
+                <> · {formatCurrency(loan.written_off_amount)} written off</>
+              )}
             </p>
           </div>
           <div className="text-right">
             <p className="text-sm font-semibold tabular-nums">
               {formatCurrency(loan.amount)}
             </p>
-            {!isSettled && (
+            {!isSettled && !isWrittenOff && (
               <p
                 className={cn(
                   "text-xs font-medium tabular-nums",
@@ -109,25 +132,44 @@ function LoanCard({
           </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
-          {!isSettled && (
-            <Dialog open={repayOpen} onOpenChange={setRepayOpen}>
-              <DialogTrigger render={<Button size="sm" variant="outline" />}>
-                Record Repayment
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Record Repayment</DialogTitle>
-                </DialogHeader>
-                <RepaymentForm
-                  loan={loan}
-                  accounts={accounts}
-                  onSubmit={handleRepayment}
-                  onCancel={() => setRepayOpen(false)}
-                  loading={loading}
-                />
-              </DialogContent>
-            </Dialog>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {!isSettled && !isWrittenOff && (
+            <>
+              <Dialog open={repayOpen} onOpenChange={setRepayOpen}>
+                <DialogTrigger render={<Button size="sm" variant="outline" />}>
+                  Record Repayment
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Record Repayment</DialogTitle>
+                  </DialogHeader>
+                  <RepaymentForm
+                    loan={loan}
+                    accounts={accounts}
+                    onSubmit={handleRepayment}
+                    onCancel={() => setRepayOpen(false)}
+                    loading={loading}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => onWriteOff(loan)}
+              >
+                Mark {loanWriteOffLabel(loan.direction)}
+              </Button>
+            </>
+          )}
+          {isWrittenOff && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onUndoWriteOff(loan.id)}
+            >
+              Restore Loan
+            </Button>
           )}
           {repayments.length > 0 && (
             <Button
@@ -203,10 +245,19 @@ export function LoansClient({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [writeOffTarget, setWriteOffTarget] = useState<WriteOffTarget | null>(
+    null
+  );
   const [deleting, setDeleting] = useState(false);
+  const [writingOff, setWritingOff] = useState(false);
 
-  const activeLoans = loans.filter((l) => (l.outstanding_amount ?? 0) > 0);
-  const settledLoans = loans.filter((l) => (l.outstanding_amount ?? 0) <= 0);
+  const activeLoans = loans.filter(
+    (l) => !l.is_written_off && (l.outstanding_amount ?? 0) > 0
+  );
+  const writtenOffLoans = loans.filter((l) => l.is_written_off);
+  const settledLoans = loans.filter(
+    (l) => !l.is_written_off && (l.outstanding_amount ?? 0) <= 0
+  );
 
   async function handleCreate(data: Parameters<typeof createLoan>[0]) {
     setLoading(true);
@@ -244,10 +295,41 @@ export function LoansClient({
     }
   }
 
+  async function handleConfirmWriteOff() {
+    if (!writeOffTarget) return;
+    setWritingOff(true);
+    const result = await writeOffLoan(writeOffTarget.id);
+    setWritingOff(false);
+
+    if (result.success) {
+      toast.success(`Marked as ${loanWriteOffLabel(writeOffTarget.direction)}`);
+      setWriteOffTarget(null);
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
+  async function handleUndoWriteOff(id: string) {
+    const result = await undoWriteOffLoan(id);
+    if (result.success) {
+      toast.success("Loan restored");
+      router.refresh();
+    } else {
+      toast.error(result.error);
+    }
+  }
+
   const deleteDescription =
     deleteTarget?.type === "loan"
       ? `The loan to ${deleteTarget.name} and all its repayments will be permanently removed.`
       : "This repayment will be permanently removed and the loan balance will be updated.";
+
+  const writeOffDescription = writeOffTarget
+    ? writeOffTarget.direction === "lent"
+      ? `Mark ${writeOffTarget.name} as a bad debtor? The remaining ${formatCurrency(writeOffTarget.outstanding)} will no longer count as owed to you. Your account balance won't change — the money already left when you lent it.`
+      : `Mark this as unrepayable? The remaining ${formatCurrency(writeOffTarget.outstanding)} you owe ${writeOffTarget.name} will be written off. Your account balance won't change — you keep the cash you already have.`
+    : "";
 
   return (
     <div className="space-y-6">
@@ -272,7 +354,8 @@ export function LoansClient({
 
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
-          {activeLoans.length} active · {settledLoans.length} settled
+          {activeLoans.length} active · {writtenOffLoans.length} written off ·{" "}
+          {settledLoans.length} settled
         </p>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button size="sm" />}>
@@ -292,6 +375,16 @@ export function LoansClient({
           </DialogContent>
         </Dialog>
       </div>
+
+      <ConfirmDialog
+        open={!!writeOffTarget}
+        onOpenChange={(open) => !open && setWriteOffTarget(null)}
+        title={`Mark as ${writeOffTarget ? loanWriteOffLabel(writeOffTarget.direction) : ""}?`}
+        description={writeOffDescription}
+        confirmLabel="Write Off"
+        onConfirm={handleConfirmWriteOff}
+        loading={writingOff}
+      />
 
       <ConfirmDialog
         open={!!deleteTarget}
@@ -327,6 +420,46 @@ export function LoansClient({
               onDeleteRepayment={(id) =>
                 setDeleteTarget({ type: "repayment", id })
               }
+              onWriteOff={(loan) =>
+                setWriteOffTarget({
+                  id: loan.id,
+                  name: loan.person_name,
+                  direction: loan.direction,
+                  outstanding: loan.outstanding_amount ?? 0,
+                })
+              }
+              onUndoWriteOff={handleUndoWriteOff}
+            />
+          ))}
+        </div>
+      )}
+
+      {writtenOffLoans.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-muted-foreground px-1 text-xs font-semibold tracking-wider uppercase">
+            Written Off
+          </h2>
+          {writtenOffLoans.map((loan) => (
+            <LoanCard
+              key={loan.id}
+              loan={loan}
+              accounts={accounts}
+              onRefresh={() => router.refresh()}
+              onDeleteLoan={(id, name) =>
+                setDeleteTarget({ type: "loan", id, name })
+              }
+              onDeleteRepayment={(id) =>
+                setDeleteTarget({ type: "repayment", id })
+              }
+              onWriteOff={(loan) =>
+                setWriteOffTarget({
+                  id: loan.id,
+                  name: loan.person_name,
+                  direction: loan.direction,
+                  outstanding: loan.outstanding_amount ?? 0,
+                })
+              }
+              onUndoWriteOff={handleUndoWriteOff}
             />
           ))}
         </div>
@@ -349,6 +482,15 @@ export function LoansClient({
               onDeleteRepayment={(id) =>
                 setDeleteTarget({ type: "repayment", id })
               }
+              onWriteOff={(loan) =>
+                setWriteOffTarget({
+                  id: loan.id,
+                  name: loan.person_name,
+                  direction: loan.direction,
+                  outstanding: loan.outstanding_amount ?? 0,
+                })
+              }
+              onUndoWriteOff={handleUndoWriteOff}
             />
           ))}
         </div>

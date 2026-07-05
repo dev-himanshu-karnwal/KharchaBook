@@ -6,19 +6,21 @@ import type {
   TransactionType,
 } from "./types";
 
-export type ActivityKind = "transaction" | "loan" | "repayment";
+export type ActivityKind = "transaction" | "loan" | "repayment" | "write_off";
 
 export type ActivityDisplayType =
   | TransactionType
   | "loan_lent"
   | "loan_borrowed"
-  | "loan_repayment";
+  | "loan_repayment"
+  | "loan_write_off";
 
 export type ActivityTypeFilter =
   | TransactionType
   | "loan_lent"
   | "loan_borrowed"
   | "loan_repayment"
+  | "loan_write_off"
   | "loan"
   | "all";
 
@@ -34,14 +36,31 @@ export interface ActivityItem {
   account_id: string;
   account?: Account;
   color: string;
+  affectsBalance: boolean;
   transaction?: Transaction;
   loanId?: string;
 }
 
 const LOAN_COLOR = "#8b5cf6";
+const WRITE_OFF_COLOR = "#f97316";
+
+export function loanWriteOffLabel(direction: LoanDirection): string {
+  return direction === "lent" ? "Bad Debtor" : "Bad Creditor";
+}
 
 function loanTitle(direction: LoanDirection, person: string): string {
   return direction === "lent" ? `Lent to ${person}` : `Borrowed from ${person}`;
+}
+
+function writeOffTitle(direction: LoanDirection, person: string): string {
+  return direction === "lent"
+    ? `Bad debt · ${person}`
+    : `Debt forgiven · ${person}`;
+}
+
+function writeOffDate(loan: PersonalLoan): string {
+  if (loan.written_off_at) return loan.written_off_at.split("T")[0];
+  return loan.updated_at.split("T")[0];
 }
 
 function repaymentTitle(direction: LoanDirection, person: string): string {
@@ -84,6 +103,7 @@ export function buildActivityFeed(
       account_id: txn.account_id,
       account: txn.account,
       color: txn.category?.color ?? "#888",
+      affectsBalance: true,
       transaction: txn,
     });
   }
@@ -103,6 +123,7 @@ export function buildActivityFeed(
       account_id: loan.account_id,
       account: loan.account,
       color: LOAN_COLOR,
+      affectsBalance: true,
       loanId: loan.id,
     });
 
@@ -121,6 +142,35 @@ export function buildActivityFeed(
         account_id: repayment.account_id,
         account: repayment.account,
         color: LOAN_COLOR,
+        affectsBalance: true,
+        loanId: loan.id,
+      });
+    }
+
+    if (
+      loan.is_written_off &&
+      loan.written_off_amount != null &&
+      loan.written_off_amount > 0
+    ) {
+      items.push({
+        id: `writeoff-${loan.id}`,
+        kind: "write_off",
+        displayType: "loan_write_off",
+        amount: Number(loan.written_off_amount),
+        date: writeOffDate(loan),
+        created_at: loan.written_off_at ?? loan.updated_at,
+        title: writeOffTitle(loan.direction, loan.person_name),
+        subtitle: [
+          loanWriteOffLabel(loan.direction),
+          "no longer receivable/payable",
+          loan.account?.name,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        account_id: loan.account_id,
+        account: loan.account,
+        color: WRITE_OFF_COLOR,
+        affectsBalance: false,
         loanId: loan.id,
       });
     }
@@ -133,6 +183,7 @@ export function getSignedAmount(
   item: ActivityItem,
   loans: PersonalLoan[]
 ): number {
+  if (!item.affectsBalance) return 0;
   if (item.kind === "transaction") {
     if (item.displayType === "income") return item.amount;
     if (item.displayType === "expense") return -item.amount;
@@ -152,6 +203,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityDisplayType, string> = {
   loan_lent: "Loan · Lent",
   loan_borrowed: "Loan · Borrowed",
   loan_repayment: "Loan · Repayment",
+  loan_write_off: "Loan · Write-off",
 };
 
 export function activityTypeLabel(item: ActivityItem): string {
@@ -159,6 +211,7 @@ export function activityTypeLabel(item: ActivityItem): string {
 }
 
 export function activityAmountColor(item: ActivityItem): string {
+  if (item.displayType === "loan_write_off") return "text-orange-400";
   if (
     item.displayType === "loan_lent" ||
     item.displayType === "loan_borrowed" ||
@@ -175,6 +228,7 @@ export function activityAmountPrefix(
   item: ActivityItem,
   signedAmount: number
 ): string {
+  if (!item.affectsBalance) return "";
   if (
     item.displayType === "loan_lent" ||
     item.displayType === "loan_borrowed" ||
@@ -248,7 +302,8 @@ function matchesActivityType(
     return (
       item.displayType === "loan_lent" ||
       item.displayType === "loan_borrowed" ||
-      item.displayType === "loan_repayment"
+      item.displayType === "loan_repayment" ||
+      item.displayType === "loan_write_off"
     );
   }
   return item.displayType === type;

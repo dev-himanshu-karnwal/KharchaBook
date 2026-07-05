@@ -89,6 +89,9 @@ export interface PersonalLoan {
   amount: number;
   date: string;
   description: string | null;
+  is_written_off: boolean;
+  written_off_at: string | null;
+  written_off_amount: number | null;
   created_at: string;
   updated_at: string;
   account?: Account;
