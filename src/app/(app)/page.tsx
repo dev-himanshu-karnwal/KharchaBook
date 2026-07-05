@@ -5,9 +5,11 @@ import { getMonthRange } from "@/lib/utils";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { ExpenseCategoryChart } from "@/components/dashboard/expense-category-chart";
 import { AccountBalances } from "@/components/dashboard/account-balances";
+import { CreditCardSummary } from "@/components/dashboard/credit-card-summary";
 import { LoanSummaryCard } from "@/components/dashboard/loan-summary-card";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { buildActivityFeed, sortActivity } from "@/lib/activity-feed";
+import { computeNetWorth } from "@/lib/account-balance";
 import type { Account, MonthlySummary, Transaction } from "@/lib/types";
 
 export default async function DashboardPage() {
@@ -60,7 +62,7 @@ export default async function DashboardPage() {
     "desc",
     loans
   );
-  const totalBalance = accounts.reduce((sum, a) => sum + Number(a.balance), 0);
+  const totalBalance = computeNetWorth(accounts);
   const monthlyIncome = (incomeRes.data ?? []).reduce(
     (sum, t) => sum + Number(t.amount),
     0
@@ -71,7 +73,9 @@ export default async function DashboardPage() {
   );
 
   const summary: MonthlySummary = {
-    totalBalance,
+    assets: totalBalance.assets,
+    creditCardOutstanding: totalBalance.creditCardOutstanding,
+    netWorth: totalBalance.netWorth,
     monthlyIncome,
     monthlyExpenses,
     netSavings: monthlyIncome - monthlyExpenses,
@@ -90,6 +94,7 @@ export default async function DashboardPage() {
         />
         <div className="space-y-6">
           <AccountBalances accounts={accounts} />
+          <CreditCardSummary accounts={accounts} />
           <RecentActivity items={monthlyActivity} loans={loans} />
         </div>
       </div>

@@ -1,4 +1,5 @@
 export type AccountType = "bank" | "cash" | "wallet" | "credit_card";
+export type AccountNature = "asset" | "liability";
 export type TransactionType = "income" | "expense" | "transfer";
 export type CategoryType = "income" | "expense";
 export interface Account {
@@ -6,10 +7,15 @@ export interface Account {
   user_id: string;
   name: string;
   type: AccountType;
+  nature: AccountNature;
   balance: number;
   currency: string;
   icon: string | null;
   color: string | null;
+  credit_limit: number | null;
+  payment_due_day: number | null;
+  statement_day: number | null;
+  card_last4: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -49,7 +55,9 @@ export type ActionResult<T = void> =
   | { success: false; error: string };
 
 export interface MonthlySummary {
-  totalBalance: number;
+  assets: number;
+  creditCardOutstanding: number;
+  netWorth: number;
   monthlyIncome: number;
   monthlyExpenses: number;
   netSavings: number;
@@ -76,6 +84,25 @@ export interface CreateAccountInput {
   type: AccountType;
   balance: number;
   color: string | null;
+}
+
+export interface CreateCreditCardInput {
+  name: string;
+  balance: number;
+  color: string | null;
+  credit_limit: number | null;
+  payment_due_day: number | null;
+  statement_day: number | null;
+  card_last4: string | null;
+}
+
+export interface UpdateCreditCardInput {
+  name?: string;
+  color?: string | null;
+  credit_limit?: number | null;
+  payment_due_day?: number | null;
+  statement_day?: number | null;
+  card_last4?: string | null;
 }
 
 export type LoanDirection = "lent" | "borrowed";

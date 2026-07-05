@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ACCOUNT_TYPES, ACCOUNT_COLORS } from "@/lib/constants";
+import { ASSET_ACCOUNT_TYPES, ACCOUNT_COLORS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { AccountType, CreateAccountInput } from "@/lib/types";
 
@@ -63,7 +63,7 @@ export function AccountForm({ onSubmit, onCancel, loading }: AccountFormProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {ACCOUNT_TYPES.map((t) => (
+            {ASSET_ACCOUNT_TYPES.map((t) => (
               <SelectItem key={t.value} value={t.value}>
                 {t.label}
               </SelectItem>

@@ -1,11 +1,13 @@
 import type { AccountType } from "./types";
 
-export const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
+export const ASSET_ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
   { value: "bank", label: "Bank Account" },
   { value: "cash", label: "Cash" },
   { value: "wallet", label: "Wallet" },
-  { value: "credit_card", label: "Credit Card" },
 ];
+
+/** @deprecated Use ASSET_ACCOUNT_TYPES for asset account forms */
+export const ACCOUNT_TYPES = ASSET_ACCOUNT_TYPES;
 
 export const ACCOUNT_COLORS = [
   "#3b82f6",

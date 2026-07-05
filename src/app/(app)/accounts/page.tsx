@@ -8,6 +8,7 @@ export default async function AccountsPage() {
   const { data } = await supabase
     .from("accounts")
     .select("*")
+    .neq("type", "credit_card")
     .order("is_active", { ascending: false })
     .order("name");
 

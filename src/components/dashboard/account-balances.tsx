@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isAssetAccount } from "@/lib/account-balance";
 import { formatCurrency } from "@/lib/utils";
 import type { Account } from "@/lib/types";
 import Link from "next/link";
@@ -7,11 +8,14 @@ const TYPE_LABELS: Record<string, string> = {
   bank: "Bank",
   cash: "Cash",
   wallet: "Wallet",
-  credit_card: "Credit Card",
 };
 
 export function AccountBalances({ accounts }: { accounts: Account[] }) {
-  if (accounts.length === 0) {
+  const assetAccounts = accounts.filter(
+    (account) => account.is_active && isAssetAccount(account)
+  );
+
+  if (assetAccounts.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -19,7 +23,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground py-8 text-center text-sm">
-            No accounts yet.{" "}
+            No asset accounts yet.{" "}
             <Link href="/accounts" className="text-primary hover:underline">
               Add your first account
             </Link>
@@ -42,7 +46,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
         </Link>
       </CardHeader>
       <CardContent className="space-y-1">
-        {accounts.map((account) => (
+        {assetAccounts.map((account) => (
           <div
             key={account.id}
             className="hover:bg-muted/50 -mx-2 flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors"
@@ -55,7 +59,7 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
               <div>
                 <p className="text-sm font-medium">{account.name}</p>
                 <p className="text-muted-foreground text-xs">
-                  {TYPE_LABELS[account.type]}
+                  {TYPE_LABELS[account.type] ?? account.type}
                 </p>
               </div>
             </div>

@@ -24,7 +24,6 @@ const TYPE_LABELS: Record<string, string> = {
   bank: "Bank",
   cash: "Cash",
   wallet: "Wallet",
-  credit_card: "Credit Card",
 };
 
 export function AccountsClient({ accounts }: { accounts: Account[] }) {
@@ -84,7 +83,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
         <EmptyState
           icon={Wallet}
           title="No accounts yet"
-          description="Add your first bank account, cash wallet, or credit card to start tracking balances."
+          description="Add your first bank account, cash, or wallet to start tracking balances."
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

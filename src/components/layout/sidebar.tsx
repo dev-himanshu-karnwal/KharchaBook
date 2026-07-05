@@ -9,6 +9,7 @@ import {
   Wallet,
   Tags,
   HandCoins,
+  CreditCard,
   LogOut,
 } from "lucide-react";
 import { logout } from "@/actions/auth";
@@ -18,6 +19,7 @@ import { useRouter } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/credit-cards", label: "Credit Cards", icon: CreditCard },
   { href: "/loans", label: "Loans", icon: HandCoins },
   { href: "/accounts", label: "Accounts", icon: Wallet },
   { href: "/categories", label: "Categories", icon: Tags },

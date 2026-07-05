@@ -23,11 +23,13 @@ export function TransactionDialog() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
+  const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
     function fetchData() {
       if (!open) return;
 
+      setFormKey((key) => key + 1);
       setDataLoading(true);
       const supabase = createClient();
       Promise.all([
@@ -80,6 +82,7 @@ export function TransactionDialog() {
           </p>
         ) : (
           <TransactionForm
+            key={formKey}
             accounts={accounts}
             categories={categories}
             onSubmit={handleSubmit}
