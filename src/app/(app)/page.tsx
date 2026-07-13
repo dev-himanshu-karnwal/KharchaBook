@@ -1,7 +1,9 @@
 import { createClient } from "@/utils/supabase/server";
+import { getActiveBudgets } from "@/actions/budgets";
 import { getExpensesByCategory } from "@/actions/dashboard";
 import { getLoanSummary, getLoans } from "@/actions/loans";
 import { getMonthRange } from "@/lib/utils";
+import { ActiveBudgetsSection } from "@/components/dashboard/active-budgets-section";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { ExpenseCategoryChart } from "@/components/dashboard/expense-category-chart";
 import { AccountBalances } from "@/components/dashboard/account-balances";
@@ -24,6 +26,7 @@ export default async function DashboardPage() {
     categoryExpensesRes,
     loanSummaryRes,
     loansRes,
+    activeBudgetsRes,
   ] = await Promise.all([
     supabase.from("accounts").select("*").eq("is_active", true).order("name"),
     supabase
@@ -48,6 +51,7 @@ export default async function DashboardPage() {
     getExpensesByCategory(start, end),
     getLoanSummary(),
     getLoans(),
+    getActiveBudgets(),
   ]);
 
   const accounts = (accountsRes.data ?? []) as Account[];
@@ -81,17 +85,22 @@ export default async function DashboardPage() {
     netSavings: monthlyIncome - monthlyExpenses,
   };
 
+  const activeBudgets = activeBudgetsRes.success ? activeBudgetsRes.data : [];
+
   return (
     <div className="space-y-6">
       <SummaryCards summary={summary} />
       <div className="grid gap-6 lg:grid-cols-2">
-        <ExpenseCategoryChart
-          initialData={
-            categoryExpensesRes.success ? categoryExpensesRes.data : []
-          }
-          initialStart={start}
-          initialEnd={end}
-        />
+        <div className="space-y-6">
+          <ActiveBudgetsSection budgets={activeBudgets} />
+          <ExpenseCategoryChart
+            initialData={
+              categoryExpensesRes.success ? categoryExpensesRes.data : []
+            }
+            initialStart={start}
+            initialEnd={end}
+          />
+        </div>
         <div className="space-y-6">
           <AccountBalances accounts={accounts} />
           <CreditCardSummary accounts={accounts} />

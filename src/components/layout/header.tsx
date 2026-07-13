@@ -15,6 +15,7 @@ import { useTransactionDialog } from "@/components/providers/transaction-dialog-
 const PAGE_TITLES: Record<string, string> = {
   "/": "Dashboard",
   "/transactions": "Transactions",
+  "/budgets": "Budgets",
   "/credit-cards": "Credit Cards",
   "/loans": "Loans",
   "/accounts": "Accounts",

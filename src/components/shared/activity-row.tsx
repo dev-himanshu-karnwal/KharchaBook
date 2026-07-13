@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { Check, Pencil, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,6 +25,9 @@ interface ActivityRowProps {
   onDelete?: (item: ActivityItem) => void;
   showDate?: boolean;
   compact?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (selected: boolean) => void;
 }
 
 export function ActivityRow({
@@ -34,6 +37,9 @@ export function ActivityRow({
   onDelete,
   showDate = false,
   compact = false,
+  selectable = false,
+  selected = false,
+  onSelectChange,
 }: ActivityRowProps) {
   const isLoan =
     item.displayType === "loan_lent" ||
@@ -49,10 +55,28 @@ export function ActivityRow({
     <div
       className={cn(
         "group flex items-center justify-between gap-2 rounded-lg border border-transparent px-3 transition-colors",
-        compact ? "py-2" : "hover:border-border hover:bg-muted/30 py-2.5"
+        compact ? "py-2" : "hover:border-border hover:bg-muted/30 py-2.5",
+        selected && "border-primary/30 bg-primary/5"
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
+        {selectable && (
+          <button
+            type="button"
+            role="checkbox"
+            aria-checked={selected}
+            aria-label={selected ? "Deselect item" : "Select item"}
+            onClick={() => onSelectChange?.(!selected)}
+            className={cn(
+              "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors",
+              selected
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-input hover:bg-muted"
+            )}
+          >
+            {selected && <Check className="h-3 w-3" />}
+          </button>
+        )}
         <span
           className={cn(
             "shrink-0 rounded-full",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import type {
 import {
   DEFAULT_ACTIVITY_FILTERS,
   buildActivityFeed,
+  computeActivitySummary,
   filterActivity,
   getSignedAmount,
   groupActivityByDate,
@@ -103,6 +104,7 @@ export function TransactionList({
   const [deletingItem, setDeletingItem] = useState<ActivityItem | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   const allItems = useMemo(
     () => buildActivityFeed(transactions, loans),
@@ -121,6 +123,54 @@ export function TransactionList({
         : null,
     [filtered, filters.sortField, filters.sortDir]
   );
+
+  const filteredIds = useMemo(
+    () => new Set(filtered.map((item) => item.id)),
+    [filtered]
+  );
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => filteredIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [filteredIds]);
+
+  const selectedItems = useMemo(
+    () => filtered.filter((item) => selectedIds.has(item.id)),
+    [filtered, selectedIds]
+  );
+
+  const summaryItems = selectedItems.length > 0 ? selectedItems : filtered;
+
+  const summary = useMemo(
+    () => computeActivitySummary(summaryItems),
+    [summaryItems]
+  );
+
+  const allVisibleSelected =
+    filtered.length > 0 && filtered.every((item) => selectedIds.has(item.id));
+
+  function toggleItemSelection(id: string, selected: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (allVisibleSelected) {
+      setSelectedIds(new Set());
+      return;
+    }
+    setSelectedIds(new Set(filtered.map((item) => item.id)));
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
 
   async function handleUpdate(data: UpdateTransactionInput) {
     if (!editingTxn) return;
@@ -213,6 +263,11 @@ export function TransactionList({
           categories={categories}
           totalCount={allItems.length}
           filteredCount={filtered.length}
+          summary={summary}
+          selectedCount={selectedItems.length}
+          allVisibleSelected={allVisibleSelected}
+          onToggleSelectAll={toggleSelectAll}
+          onClearSelection={clearSelection}
         />
       )}
 
@@ -257,6 +312,11 @@ export function TransactionList({
                   signedAmount={getSignedAmount(item, loans)}
                   onEdit={setEditingTxn}
                   onDelete={setDeletingItem}
+                  selectable
+                  selected={selectedIds.has(item.id)}
+                  onSelectChange={(selected) =>
+                    toggleItemSelection(item.id, selected)
+                  }
                 />
               ))}
             </div>
@@ -272,6 +332,11 @@ export function TransactionList({
               signedAmount={getSignedAmount(item, loans)}
               onEdit={setEditingTxn}
               onDelete={setDeletingItem}
+              selectable
+              selected={selectedIds.has(item.id)}
+              onSelectChange={(selected) =>
+                toggleItemSelection(item.id, selected)
+              }
             />
           ))}
         </div>

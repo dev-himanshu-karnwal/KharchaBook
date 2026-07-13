@@ -385,3 +385,26 @@ export function groupActivityByDate(
     sortDir === "asc" ? a.localeCompare(b) : b.localeCompare(a)
   );
 }
+
+export interface ActivitySummary {
+  count: number;
+  income: number;
+  expense: number;
+  transfer: number;
+}
+
+export function computeActivitySummary(items: ActivityItem[]): ActivitySummary {
+  let income = 0;
+  let expense = 0;
+  let transfer = 0;
+
+  for (const item of items) {
+    if (!item.affectsBalance) continue;
+
+    if (item.displayType === "income") income += item.amount;
+    else if (item.displayType === "expense") expense += item.amount;
+    else if (item.displayType === "transfer") transfer += item.amount;
+  }
+
+  return { count: items.length, income, expense, transfer };
+}

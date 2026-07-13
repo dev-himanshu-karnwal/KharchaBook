@@ -179,7 +179,7 @@ export function ExpenseCategoryChart({
   const maxAmount = data[0]?.amount ?? 0;
 
   return (
-    <Card className="h-full">
+    <Card>
       <CardHeader className="space-y-4">
         <CardTitle className="text-base">Expenses by Category</CardTitle>
         <Tabs

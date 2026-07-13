@@ -14,9 +14,14 @@ import {
 } from "@/components/ui/select";
 import { isCreditCard } from "@/lib/account-balance";
 import { computeCreditCardMetrics } from "@/lib/credit-card";
+import {
+  getProjectedBudgetWarnings,
+  isDateInBudgetRange,
+} from "@/lib/expense-budget";
 import { cn, formatCurrency, toISODate } from "@/lib/utils";
 import type {
   Account,
+  BudgetWithStatus,
   Category,
   CreateTransactionInput,
   TransactionType,
@@ -25,6 +30,7 @@ import type {
 interface TransactionFormProps {
   accounts: Account[];
   categories: Category[];
+  budgets?: BudgetWithStatus[];
   onSubmit: (data: CreateTransactionInput) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
@@ -116,6 +122,7 @@ function AccountPicker({
 export function TransactionForm({
   accounts,
   categories,
+  budgets = [],
   onSubmit,
   onCancel,
   loading,
@@ -153,6 +160,21 @@ export function TransactionForm({
   const filteredCategories = categories.filter(
     (c) => c.type === (type === "transfer" ? "expense" : type)
   );
+
+  const budgetWarnings = useMemo(() => {
+    if (type !== "expense" || !amount || !date) return [];
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return [];
+
+    const affectedBudgets = budgets.filter((budget) =>
+      isDateInBudgetRange(date, budget.start_date, budget.end_date)
+    );
+
+    return affectedBudgets.flatMap((budget) =>
+      getProjectedBudgetWarnings(budget, parsedAmount)
+    );
+  }, [type, amount, date, budgets]);
 
   function handleSelectAccount(id: string) {
     setAccountId(id);
@@ -291,6 +313,24 @@ export function TransactionForm({
           className="text-lg"
         />
       </div>
+
+      {budgetWarnings.length > 0 && (
+        <div className="space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+          {budgetWarnings.map((warning, index) => (
+            <p
+              key={`${warning.level}-${index}`}
+              className={cn(
+                "text-xs",
+                warning.level === "over_budget"
+                  ? "text-red-400"
+                  : "text-amber-400"
+              )}
+            >
+              {warning.message}
+            </p>
+          ))}
+        </div>
+      )}
 
       {type === "transfer" && (
         <div className="space-y-2">

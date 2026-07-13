@@ -160,3 +160,51 @@ export interface CreateRepaymentInput {
   date: string;
   description: string | null;
 }
+
+export type BudgetPeriodType = "monthly" | "custom";
+export type BudgetLifecycle = "upcoming" | "active" | "past";
+export type BudgetWarningLevel = "approaching_limit" | "over_budget";
+
+export interface BudgetWarning {
+  level: BudgetWarningLevel;
+  message: string;
+}
+
+export interface ExpenseBudget {
+  id: string;
+  user_id: string;
+  amount: number;
+  period_type: BudgetPeriodType;
+  name: string;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BudgetWithStatus extends ExpenseBudget {
+  spent: number;
+  remaining: number;
+  utilizationPercent: number;
+  lifecycle: BudgetLifecycle;
+  warnings: BudgetWarning[];
+}
+
+export interface CreateBudgetInput {
+  period_type: BudgetPeriodType;
+  amount: number;
+  name?: string;
+  start_date?: string;
+  end_date?: string;
+  month?: number;
+  year?: number;
+}
+
+export interface UpdateBudgetInput {
+  amount?: number;
+  name?: string;
+  start_date?: string;
+  end_date?: string;
+  month?: number;
+  year?: number;
+}

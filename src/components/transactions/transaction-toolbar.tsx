@@ -18,10 +18,12 @@ import {
   type ActivityFilters,
   type ActivitySortField,
   type ActivitySortDir,
+  type ActivitySummary,
   type ActivityTypeFilter,
 } from "@/lib/activity-feed";
 import type { Account, Category } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { TransactionSummary } from "./transaction-summary";
 
 const TYPE_OPTIONS: { value: ActivityTypeFilter; label: string }[] = [
   { value: "all", label: "All types" },
@@ -58,6 +60,11 @@ interface TransactionToolbarProps {
   categories: Category[];
   totalCount: number;
   filteredCount: number;
+  summary: ActivitySummary;
+  selectedCount: number;
+  allVisibleSelected: boolean;
+  onToggleSelectAll: () => void;
+  onClearSelection: () => void;
 }
 
 function FilterField({
@@ -88,6 +95,11 @@ export function TransactionToolbar({
   categories,
   totalCount,
   filteredCount,
+  summary,
+  selectedCount,
+  allVisibleSelected,
+  onToggleSelectAll,
+  onClearSelection,
 }: TransactionToolbarProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const sortValue = `${filters.sortField}-${filters.sortDir}`;
@@ -137,6 +149,28 @@ export function TransactionToolbar({
             </div>
           </FilterField>
           <div className="flex items-center gap-2 pb-0.5 sm:pb-2">
+            {filteredCount > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8"
+                onClick={onToggleSelectAll}
+              >
+                {allVisibleSelected ? "Deselect all" : "Select all"}
+              </Button>
+            )}
+            {selectedCount > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8"
+                onClick={onClearSelection}
+              >
+                Clear ({selectedCount})
+              </Button>
+            )}
             <p className="text-muted-foreground shrink-0 text-xs tabular-nums">
               {filteredCount === totalCount
                 ? `${totalCount} item${totalCount === 1 ? "" : "s"}`
@@ -285,6 +319,14 @@ export function TransactionToolbar({
             </div>
           )}
         </div>
+
+        {filteredCount > 0 && (
+          <TransactionSummary
+            summary={summary}
+            selectedCount={selectedCount}
+            totalCount={filteredCount}
+          />
+        )}
       </CardContent>
     </Card>
   );

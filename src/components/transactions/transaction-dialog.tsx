@@ -13,7 +13,13 @@ import { TransactionForm } from "./transaction-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/utils/supabase/client";
 import { createTransaction } from "@/actions/transactions";
-import type { Account, Category, CreateTransactionInput } from "@/lib/types";
+import { getBudgets } from "@/actions/budgets";
+import type {
+  Account,
+  BudgetWithStatus,
+  Category,
+  CreateTransactionInput,
+} from "@/lib/types";
 import { toast } from "sonner";
 
 export function TransactionDialog() {
@@ -21,6 +27,7 @@ export function TransactionDialog() {
   const router = useRouter();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [budgets, setBudgets] = useState<BudgetWithStatus[]>([]);
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
   const [formKey, setFormKey] = useState(0);
@@ -39,10 +46,12 @@ export function TransactionDialog() {
           .eq("is_active", true)
           .order("name"),
         supabase.from("categories").select("*").order("sort_order"),
+        getBudgets(),
       ])
-        .then(([{ data: a }, { data: c }]) => {
+        .then(([{ data: a }, { data: c }, budgetsRes]) => {
           setAccounts((a as Account[]) ?? []);
           setCategories((c as Category[]) ?? []);
+          setBudgets(budgetsRes.success ? budgetsRes.data : []);
         })
         .finally(() => setDataLoading(false));
     }
@@ -85,6 +94,7 @@ export function TransactionDialog() {
             key={formKey}
             accounts={accounts}
             categories={categories}
+            budgets={budgets}
             onSubmit={handleSubmit}
             onCancel={() => setOpen(false)}
             loading={loading}
