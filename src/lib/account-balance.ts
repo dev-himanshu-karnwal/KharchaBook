@@ -72,6 +72,38 @@ function applyAccountTransaction(
   return applyAssetTransaction(txnType, role, amount);
 }
 
+/**
+ * Balance impact when creating/reversing a personal loan.
+ * Asset: lent decreases cash, borrowed increases cash.
+ * Liability (credit card): signs flip — lending on a card increases outstanding.
+ */
+export function loanBalanceDelta(
+  account: Pick<Account, "type" | "nature">,
+  direction: "lent" | "borrowed",
+  amount: number,
+  action: "create" | "reverse"
+): number {
+  const sign = action === "create" ? 1 : -1;
+  const assetDelta = direction === "lent" ? -amount : amount;
+  return (isLiabilityAccount(account) ? -assetDelta : assetDelta) * sign;
+}
+
+/**
+ * Balance impact when recording/reversing a loan repayment.
+ * Asset: collecting a lent repayment increases cash; paying a borrowed loan decreases cash.
+ * Liability: signs flip relative to assets.
+ */
+export function repaymentBalanceDelta(
+  account: Pick<Account, "type" | "nature">,
+  direction: "lent" | "borrowed",
+  amount: number,
+  action: "create" | "reverse"
+): number {
+  const sign = action === "create" ? 1 : -1;
+  const assetDelta = direction === "lent" ? amount : -amount;
+  return (isLiabilityAccount(account) ? -assetDelta : assetDelta) * sign;
+}
+
 export function computeTransactionBalanceDeltas(
   txn: {
     type: TransactionType;

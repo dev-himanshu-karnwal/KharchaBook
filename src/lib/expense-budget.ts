@@ -110,9 +110,7 @@ export function getBudgetProgressColor(utilizationPercent: number): string {
   return "#22c55e";
 }
 
-export function resolveCreateBudgetInput(
-  input: CreateBudgetInput
-):
+export function resolveCreateBudgetInput(input: CreateBudgetInput):
   | {
       ok: true;
       data: {

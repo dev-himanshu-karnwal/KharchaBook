@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import {
+  loanBalanceDelta,
+  repaymentBalanceDelta,
+  validateBalanceDelta,
+} from "@/lib/account-balance";
 import type {
+  Account,
   ActionResult,
   CreateLoanInput,
   CreateRepaymentInput,
@@ -10,26 +16,6 @@ import type {
   LoanSummary,
   PersonalLoan,
 } from "@/lib/types";
-
-function loanBalanceDelta(
-  direction: "lent" | "borrowed",
-  amount: number,
-  action: "create" | "reverse"
-): number {
-  const sign = action === "create" ? 1 : -1;
-  if (direction === "lent") return -amount * sign;
-  return amount * sign;
-}
-
-function repaymentBalanceDelta(
-  direction: "lent" | "borrowed",
-  amount: number,
-  action: "create" | "reverse"
-): number {
-  const sign = action === "create" ? 1 : -1;
-  if (direction === "lent") return amount * sign;
-  return -amount * sign;
-}
 
 function enrichLoan(loan: Record<string, unknown>): PersonalLoan {
   const repayments = (loan.repayments ?? []) as LoanRepayment[];
@@ -48,6 +34,37 @@ function enrichLoan(loan: Record<string, unknown>): PersonalLoan {
     repaid_amount: repaid,
     outstanding_amount: isWrittenOff ? 0 : Math.max(0, rawOutstanding),
   };
+}
+
+async function fetchAccount(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  accountId: string
+): Promise<Account | { error: string }> {
+  const { data, error } = await supabase
+    .from("accounts")
+    .select("*")
+    .eq("id", accountId)
+    .single();
+
+  if (error || !data) return { error: error?.message ?? "Account not found" };
+  return data as Account;
+}
+
+async function applyAccountDelta(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  account: Account,
+  delta: number
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const validation = validateBalanceDelta(account, delta);
+  if (!validation.ok) return validation;
+
+  const { error } = await supabase.rpc("adjust_account_balance", {
+    p_account_id: account.id,
+    p_delta: delta,
+  });
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 export async function getLoans(): Promise<ActionResult<PersonalLoan[]>> {
@@ -99,6 +116,18 @@ export async function createLoan(
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Not authenticated" };
 
+  const account = await fetchAccount(supabase, data.account_id);
+  if ("error" in account) return { success: false, error: account.error };
+
+  const delta = loanBalanceDelta(
+    account,
+    data.direction,
+    data.amount,
+    "create"
+  );
+  const validation = validateBalanceDelta(account, delta);
+  if (!validation.ok) return { success: false, error: validation.error };
+
   const { data: loan, error } = await supabase
     .from("personal_loans")
     .insert({
@@ -115,10 +144,8 @@ export async function createLoan(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.rpc("adjust_account_balance", {
-    p_account_id: data.account_id,
-    p_delta: loanBalanceDelta(data.direction, data.amount, "create"),
-  });
+  const applied = await applyAccountDelta(supabase, account, delta);
+  if (!applied.ok) return { success: false, error: applied.error };
 
   revalidatePath("/", "layout");
   return {
@@ -167,6 +194,19 @@ export async function createRepayment(
     };
   }
 
+  const account = await fetchAccount(supabase, data.account_id);
+  if ("error" in account) return { success: false, error: account.error };
+
+  const direction = loan.direction as "lent" | "borrowed";
+  const delta = repaymentBalanceDelta(
+    account,
+    direction,
+    data.amount,
+    "create"
+  );
+  const validation = validateBalanceDelta(account, delta);
+  if (!validation.ok) return { success: false, error: validation.error };
+
   const { data: repayment, error } = await supabase
     .from("loan_repayments")
     .insert({
@@ -182,14 +222,8 @@ export async function createRepayment(
 
   if (error) return { success: false, error: error.message };
 
-  await supabase.rpc("adjust_account_balance", {
-    p_account_id: data.account_id,
-    p_delta: repaymentBalanceDelta(
-      loan.direction as "lent" | "borrowed",
-      data.amount,
-      "create"
-    ),
-  });
+  const applied = await applyAccountDelta(supabase, account, delta);
+  if (!applied.ok) return { success: false, error: applied.error };
 
   revalidatePath("/", "layout");
   return {
@@ -203,7 +237,7 @@ export async function deleteLoan(id: string): Promise<ActionResult> {
 
   const { data: loan, error: loanErr } = await supabase
     .from("personal_loans")
-    .select("*")
+    .select("*, account:accounts(*)")
     .eq("id", id)
     .single();
 
@@ -219,28 +253,40 @@ export async function deleteLoan(id: string): Promise<ActionResult> {
 
   const { data: repayments, error: repayErr } = await supabase
     .from("loan_repayments")
-    .select("*")
+    .select("*, account:accounts(*)")
     .eq("loan_id", id);
 
   if (repayErr) return { success: false, error: repayErr.message };
 
   const direction = loan.direction as "lent" | "borrowed";
+  const loanAccount = loan.account as Account | null;
+  if (!loanAccount) return { success: false, error: "Loan account not found" };
 
   for (const repayment of repayments ?? []) {
-    await supabase.rpc("adjust_account_balance", {
-      p_account_id: repayment.account_id,
-      p_delta: repaymentBalanceDelta(
+    const repaymentAccount = repayment.account as Account | null;
+    if (!repaymentAccount) {
+      return { success: false, error: "Repayment account not found" };
+    }
+
+    const applied = await applyAccountDelta(
+      supabase,
+      repaymentAccount,
+      repaymentBalanceDelta(
+        repaymentAccount,
         direction,
         Number(repayment.amount),
         "reverse"
-      ),
-    });
+      )
+    );
+    if (!applied.ok) return { success: false, error: applied.error };
   }
 
-  await supabase.rpc("adjust_account_balance", {
-    p_account_id: loan.account_id,
-    p_delta: loanBalanceDelta(direction, Number(loan.amount), "reverse"),
-  });
+  const loanReversed = await applyAccountDelta(
+    supabase,
+    loanAccount,
+    loanBalanceDelta(loanAccount, direction, Number(loan.amount), "reverse")
+  );
+  if (!loanReversed.ok) return { success: false, error: loanReversed.error };
 
   const { error } = await supabase.from("personal_loans").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
@@ -254,7 +300,7 @@ export async function deleteRepayment(id: string): Promise<ActionResult> {
 
   const { data: repayment, error: fetchErr } = await supabase
     .from("loan_repayments")
-    .select("*, loan:personal_loans(direction)")
+    .select("*, account:accounts(*), loan:personal_loans(direction)")
     .eq("id", id)
     .single();
 
@@ -263,15 +309,20 @@ export async function deleteRepayment(id: string): Promise<ActionResult> {
 
   const direction = (repayment.loan as { direction: "lent" | "borrowed" })
     .direction;
+  const account = repayment.account as Account | null;
+  if (!account) return { success: false, error: "Repayment account not found" };
 
-  await supabase.rpc("adjust_account_balance", {
-    p_account_id: repayment.account_id,
-    p_delta: repaymentBalanceDelta(
+  const applied = await applyAccountDelta(
+    supabase,
+    account,
+    repaymentBalanceDelta(
+      account,
       direction,
       Number(repayment.amount),
       "reverse"
-    ),
-  });
+    )
+  );
+  if (!applied.ok) return { success: false, error: applied.error };
 
   const { error } = await supabase
     .from("loan_repayments")
