@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,51 +12,47 @@ import {
 } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { useTransactionDialog } from "@/components/providers/transaction-dialog-provider";
-
-const PAGE_TITLES: Record<string, string> = {
-  "/": "Dashboard",
-  "/transactions": "Transactions",
-  "/budgets": "Budgets",
-  "/credit-cards": "Credit Cards",
-  "/loans": "Loans",
-  "/accounts": "Accounts",
-  "/categories": "Categories",
-};
-
-const SHOW_ADD_ON = new Set(["/", "/transactions"]);
+import { PAGE_META } from "@/lib/nav";
 
 export function Header() {
   const pathname = usePathname();
   const { setOpen } = useTransactionDialog();
-  const title = PAGE_TITLES[pathname] ?? "KharchaBook";
-  const showAdd = SHOW_ADD_ON.has(pathname);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const meta = PAGE_META[pathname] ?? {
+    title: "KharchaBook",
+    showAddTransaction: false,
+  };
 
   return (
-    <header className="border-border bg-background/80 flex h-14 shrink-0 items-center gap-4 border-b px-4 backdrop-blur-sm lg:px-6">
-      <Sheet>
+    <header className="border-border/70 bg-background/70 sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b px-4 backdrop-blur-xl lg:px-6">
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetTrigger
           render={<Button variant="ghost" size="icon" className="lg:hidden" />}
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Open menu</span>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="w-72 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <Sidebar />
+          <Sidebar onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 
-      <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+      <div className="min-w-0 flex-1 lg:hidden">
+        <p className="truncate text-sm font-semibold tracking-tight">
+          {meta.title}
+        </p>
+      </div>
 
-      {showAdd && (
-        <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        {meta.showAddTransaction && (
           <Button size="sm" onClick={() => setOpen(true)}>
             <Plus className="mr-1.5 h-4 w-4" />
-            <span className="hidden sm:inline">Add Transaction</span>
+            <span className="hidden sm:inline">Add transaction</span>
             <span className="sm:hidden">Add</span>
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 }

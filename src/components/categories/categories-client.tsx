@@ -47,6 +47,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Category, CategoryType } from "@/lib/types";
+import { PageHeader } from "@/components/v2/page-header";
+import { PAGE_META } from "@/lib/nav";
+import { MoneyAmount } from "@/components/v2/money-amount";
 import {
   categoryFiltersToSearchParams,
   getDateRangeFromFilters,
@@ -54,15 +57,7 @@ import {
   type CategoryPageFilters,
 } from "@/lib/category-filters";
 import { cn, formatCurrency, getMonthRange, toISODate } from "@/lib/utils";
-import {
-  Layers,
-  Plus,
-  Search,
-  Trash2,
-  TrendingDown,
-  TrendingUp,
-  X,
-} from "lucide-react";
+import { Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 function CategoryBar({
@@ -348,70 +343,66 @@ export function CategoriesClient({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">
-              Total Expenses
-            </CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-400" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold tabular-nums">
-              {formatCurrency(stats.expenseTotal)}
+      <PageHeader
+        title={PAGE_META["/categories"].title}
+        subtitle={PAGE_META["/categories"].subtitle}
+        className="mb-0"
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="surface-panel p-4">
+          <p className="text-muted-foreground text-sm font-medium">
+            Total expenses
+          </p>
+          <MoneyAmount
+            amount={stats.expenseTotal}
+            size="lg"
+            tone="expense"
+            className="mt-1"
+          />
+        </div>
+        <div className="surface-panel p-4">
+          <p className="text-muted-foreground text-sm font-medium">
+            Total income
+          </p>
+          <MoneyAmount
+            amount={stats.incomeTotal}
+            size="lg"
+            tone="income"
+            className="mt-1"
+          />
+        </div>
+        <div className="surface-panel p-4">
+          <p className="text-muted-foreground text-sm font-medium">
+            Active categories
+          </p>
+          <p className="tabular-money mt-1 text-2xl font-semibold">
+            {activeCategories}
+          </p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            of {categories.length} total
+          </p>
+        </div>
+        <div className="surface-panel p-4">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-muted-foreground text-sm font-medium">
+              Top category
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">
-              Total Income
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-emerald-400" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold tabular-nums">
-              {formatCurrency(stats.incomeTotal)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">
-              Active Categories
-            </CardTitle>
-            <Layers className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold tabular-nums">
-              {activeCategories}
-            </p>
-            <p className="text-muted-foreground mt-1 text-xs">
-              of {categories.length} total
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">
-              Top Category
-            </CardTitle>
             <span
-              className="h-3 w-3 rounded-full"
+              className="h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: topCategory?.color ?? "#888" }}
+              aria-hidden
             />
-          </CardHeader>
-          <CardContent>
-            <p className="truncate text-lg font-bold">
-              {topCategory?.amount ? topCategory.categoryName : "—"}
-            </p>
-            <p className="text-muted-foreground mt-1 text-xs tabular-nums">
-              {topCategory?.amount
-                ? formatCurrency(topCategory.amount)
-                : "No activity"}
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+          <p className="mt-1 truncate text-lg font-semibold">
+            {topCategory?.amount ? topCategory.categoryName : "—"}
+          </p>
+          <p className="text-muted-foreground mt-1 text-xs tabular-nums">
+            {topCategory?.amount
+              ? formatCurrency(topCategory.amount)
+              : "No activity"}
+          </p>
+        </div>
       </div>
 
       <Card>

@@ -29,6 +29,9 @@ import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { loanWriteOffLabel } from "@/lib/activity-feed";
 import type { Account, LoanSummary, PersonalLoan } from "@/lib/types";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/v2/page-header";
+import { MoneyAmount } from "@/components/v2/money-amount";
+import { PAGE_META } from "@/lib/nav";
 
 type DeleteTarget =
   | { type: "loan"; id: string; name: string }
@@ -333,48 +336,56 @@ export function LoansClient({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="hover:ring-foreground/20 transition-colors">
-          <CardContent className="p-4">
-            <p className="text-muted-foreground text-sm">Owed to You</p>
-            <p className="text-2xl font-bold tracking-tight text-emerald-400 tabular-nums">
-              {formatCurrency(summary.owedToYou)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="hover:ring-foreground/20 transition-colors">
-          <CardContent className="p-4">
-            <p className="text-muted-foreground text-sm">You Owe</p>
-            <p className="text-2xl font-bold tracking-tight text-amber-400 tabular-nums">
-              {formatCurrency(summary.youOwe)}
-            </p>
-          </CardContent>
-        </Card>
+      <PageHeader
+        title={PAGE_META["/loans"].title}
+        subtitle={PAGE_META["/loans"].subtitle}
+        className="mb-0"
+        actions={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger render={<Button size="sm" />}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add loan
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Record loan</DialogTitle>
+              </DialogHeader>
+              <LoanForm
+                accounts={accounts}
+                onSubmit={handleCreate}
+                onCancel={() => setOpen(false)}
+                loading={loading}
+              />
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="surface-panel p-4">
+          <p className="text-muted-foreground text-sm">Owed to you</p>
+          <MoneyAmount
+            amount={summary.owedToYou}
+            size="lg"
+            tone="income"
+            className="mt-1"
+          />
+        </div>
+        <div className="surface-panel p-4">
+          <p className="text-muted-foreground text-sm">You owe</p>
+          <MoneyAmount
+            amount={summary.youOwe}
+            size="lg"
+            tone="warning"
+            className="mt-1"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {activeLoans.length} active · {writtenOffLoans.length} written off ·{" "}
-          {settledLoans.length} settled
-        </p>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button size="sm" />}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Loan
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Record Loan</DialogTitle>
-            </DialogHeader>
-            <LoanForm
-              accounts={accounts}
-              onSubmit={handleCreate}
-              onCancel={() => setOpen(false)}
-              loading={loading}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+      <p className="text-muted-foreground text-sm">
+        {activeLoans.length} active · {writtenOffLoans.length} written off ·{" "}
+        {settledLoans.length} settled
+      </p>
 
       <ConfirmDialog
         open={!!writeOffTarget}
@@ -389,7 +400,7 @@ export function LoansClient({
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Are you sure?"
+        title="Delete this entry?"
         description={deleteDescription}
         onConfirm={handleConfirmDelete}
         loading={deleting}
@@ -400,6 +411,12 @@ export function LoansClient({
           icon={HandCoins}
           title="No loans recorded"
           description="Track money lent to or borrowed from friends and family without counting it as expense or income."
+          action={
+            <Button size="sm" onClick={() => setOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add loan
+            </Button>
+          }
         />
       )}
 

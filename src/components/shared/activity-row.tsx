@@ -95,7 +95,10 @@ export function ActivityRow({
               {item.title}
             </p>
             {isLoan && (
-              <Badge variant="outline" className="text-[10px] text-violet-400">
+              <Badge
+                variant="outline"
+                className="text-[10px] text-[var(--transfer)]"
+              >
                 {activityTypeLabel(item)}
               </Badge>
             )}

@@ -5,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,6 +39,12 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-transfer: var(--transfer);
+  --color-warning: var(--warning);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,75 +54,96 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+  V2 visual language — "Ledger Mist"
+  Cool slate ground, deep teal ink, clear money semantics.
+  Light-first for trust; dark remains available.
+*/
 :root {
   color-scheme: light;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(0.97 0.012 210);
+  --foreground: oklch(0.22 0.03 230);
+  --surface: oklch(0.99 0.004 210);
+  --surface-elevated: oklch(1 0 0);
+  --card: oklch(0.995 0.004 210 / 0.86);
+  --card-foreground: oklch(0.22 0.03 230);
+  --popover: oklch(0.995 0.004 210);
+  --popover-foreground: oklch(0.22 0.03 230);
+  --primary: oklch(0.38 0.07 210);
+  --primary-foreground: oklch(0.98 0.01 210);
+  --secondary: oklch(0.94 0.02 210);
+  --secondary-foreground: oklch(0.28 0.04 230);
+  --muted: oklch(0.94 0.015 210);
+  --muted-foreground: oklch(0.48 0.03 230);
+  --accent: oklch(0.93 0.03 195);
+  --accent-foreground: oklch(0.28 0.05 210);
+  --destructive: oklch(0.52 0.19 25);
+  --border: oklch(0.88 0.02 210);
+  --input: oklch(0.9 0.015 210);
+  --ring: oklch(0.55 0.08 210);
+  --income: oklch(0.48 0.12 155);
+  --expense: oklch(0.52 0.17 25);
+  --transfer: oklch(0.48 0.08 250);
+  --warning: oklch(0.62 0.14 65);
+  --chart-1: oklch(0.55 0.1 210);
+  --chart-2: oklch(0.58 0.12 155);
+  --chart-3: oklch(0.62 0.14 65);
+  --chart-4: oklch(0.55 0.14 25);
+  --chart-5: oklch(0.5 0.08 250);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.985 0.008 210 / 0.92);
+  --sidebar-foreground: oklch(0.28 0.03 230);
+  --sidebar-primary: oklch(0.38 0.07 210);
+  --sidebar-primary-foreground: oklch(0.98 0.01 210);
+  --sidebar-accent: oklch(0.93 0.03 195);
+  --sidebar-accent-foreground: oklch(0.28 0.05 210);
+  --sidebar-border: oklch(0.88 0.02 210);
+  --sidebar-ring: oklch(0.55 0.08 210);
+  --app-glow: oklch(0.82 0.05 195 / 0.45);
+  --app-glow-2: oklch(0.88 0.04 155 / 0.35);
 }
 
 .dark {
   color-scheme: dark;
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
+  --background: oklch(0.17 0.02 230);
+  --foreground: oklch(0.95 0.01 210);
+  --surface: oklch(0.2 0.022 230);
+  --surface-elevated: oklch(0.24 0.025 230);
+  --card: oklch(0.22 0.022 230 / 0.9);
+  --card-foreground: oklch(0.95 0.01 210);
+  --popover: oklch(0.22 0.022 230);
+  --popover-foreground: oklch(0.95 0.01 210);
+  --primary: oklch(0.78 0.06 195);
+  --primary-foreground: oklch(0.18 0.03 230);
+  --secondary: oklch(0.28 0.025 230);
+  --secondary-foreground: oklch(0.95 0.01 210);
+  --muted: oklch(0.26 0.02 230);
+  --muted-foreground: oklch(0.72 0.02 210);
+  --accent: oklch(0.3 0.04 195);
+  --accent-foreground: oklch(0.95 0.01 210);
+  --destructive: oklch(0.68 0.16 25);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.65 0.06 195);
+  --income: oklch(0.72 0.12 155);
+  --expense: oklch(0.7 0.15 25);
+  --transfer: oklch(0.72 0.08 250);
+  --warning: oklch(0.78 0.12 75);
+  --chart-1: oklch(0.72 0.08 195);
+  --chart-2: oklch(0.72 0.12 155);
+  --chart-3: oklch(0.78 0.12 75);
+  --chart-4: oklch(0.7 0.15 25);
+  --chart-5: oklch(0.72 0.08 250);
+  --sidebar: oklch(0.19 0.022 230 / 0.95);
+  --sidebar-foreground: oklch(0.95 0.01 210);
+  --sidebar-primary: oklch(0.78 0.06 195);
+  --sidebar-primary-foreground: oklch(0.18 0.03 230);
+  --sidebar-accent: oklch(0.28 0.04 195);
+  --sidebar-accent-foreground: oklch(0.95 0.01 210);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: oklch(0.65 0.06 195);
+  --app-glow: oklch(0.35 0.06 195 / 0.35);
+  --app-glow-2: oklch(0.32 0.05 155 / 0.28);
 }
 
 @layer base {
@@ -124,10 +151,16 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
   }
   html {
-    @apply scroll-smooth font-sans;
+    @apply scroll-smooth;
+  }
+  h1,
+  h2,
+  h3,
+  .font-heading {
+    font-family: var(--font-heading);
   }
 
   .dark input[type="date"],
@@ -139,13 +172,71 @@
 
 @layer utilities {
   .page-enter {
-    animation: page-enter 0.3s ease-out;
+    animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .fade-up {
+    animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .fade-up-delay-1 {
+    animation-delay: 60ms;
+  }
+  .fade-up-delay-2 {
+    animation-delay: 120ms;
+  }
+  .fade-up-delay-3 {
+    animation-delay: 180ms;
+  }
+
+  .app-atmosphere {
+    background:
+      radial-gradient(
+        ellipse 80% 50% at 10% -10%,
+        var(--app-glow),
+        transparent
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 90% 0%,
+        var(--app-glow-2),
+        transparent
+      ),
+      var(--background);
+  }
+
+  .surface-panel {
+    @apply border-border/80 bg-card/80 rounded-2xl border shadow-[0_1px_0_oklch(1_0_0_/_0.4)_inset] backdrop-blur-md;
+  }
+
+  .money-pos {
+    color: var(--income);
+  }
+  .money-neg {
+    color: var(--expense);
+  }
+  .money-neutral {
+    color: var(--transfer);
+  }
+
+  .tabular-money {
+    @apply font-mono tracking-tight tabular-nums;
   }
 
   @keyframes page-enter {
     from {
       opacity: 0;
-      transform: translateY(4px);
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
@@ -157,4 +248,11 @@
 a,
 button {
   @apply cursor-pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .fade-up {
+    animation: none;
+  }
 }
