@@ -1,17 +1,24 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Outfit, Source_Sans_3, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import { cn } from "@/lib/utils";
 
-const jakarta = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-outfit",
 });
-const jetbrainsMono = JetBrains_Mono({
+
+const sourceSans = Source_Sans_3({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-source-sans",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-ibm-plex-mono",
 });
 
 export const metadata: Metadata = {
@@ -25,15 +32,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen antialiased",
-          jakarta.variable,
-          jetbrainsMono.variable
+          outfit.variable,
+          sourceSans.variable,
+          ibmPlexMono.variable
         )}
       >
-        <NextTopLoader color="oklch(0.708 0 0)" showSpinner={false} />
+        <NextTopLoader color="oklch(0.45 0.08 210)" showSpinner={false} />
         {children}
         <Toaster richColors position="top-right" />
       </body>

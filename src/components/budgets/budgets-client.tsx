@@ -27,6 +27,8 @@ import type {
   UpdateBudgetInput,
 } from "@/lib/types";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/v2/page-header";
+import { PAGE_META } from "@/lib/nav";
 
 type TabFilter = "active" | "upcoming" | "past" | "all";
 
@@ -213,28 +215,30 @@ export function BudgetsClient({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {budgets.length} budget{budgets.length !== 1 ? "s" : ""}
-        </p>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger render={<Button size="sm" />}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Budget
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create Budget</DialogTitle>
-            </DialogHeader>
-            <BudgetForm
-              onSubmit={handleCreate}
-              onCancel={() => setCreateOpen(false)}
-              loading={loading}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title={PAGE_META["/budgets"].title}
+        subtitle={PAGE_META["/budgets"].subtitle}
+        className="mb-0"
+        actions={
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger render={<Button size="sm" />}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add budget
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create budget</DialogTitle>
+              </DialogHeader>
+              <BudgetForm
+                onSubmit={handleCreate}
+                onCancel={() => setCreateOpen(false)}
+                loading={loading}
+              />
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabFilter)}>
         <TabsList>

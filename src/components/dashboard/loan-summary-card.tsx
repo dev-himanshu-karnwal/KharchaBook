@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import { HandCoins, ArrowRight } from "lucide-react";
+import { MoneyAmount } from "@/components/v2/money-amount";
+import { Section } from "@/components/v2/section";
 import type { LoanSummary } from "@/lib/types";
 
 export function LoanSummaryCard({ summary }: { summary: LoanSummary }) {
@@ -10,38 +9,39 @@ export function LoanSummaryCard({ summary }: { summary: LoanSummary }) {
   if (!hasOutstanding) return null;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-muted-foreground text-sm font-medium">
-          Personal Loans
-        </CardTitle>
-        <HandCoins className="h-4 w-4 text-violet-400" />
-      </CardHeader>
-      <CardContent className="space-y-2">
+    <Section
+      title="Personal loans"
+      description="Open positions with people"
+      href="/loans"
+      hrefLabel="View loans"
+    >
+      <dl className="space-y-3">
         {summary.owedToYou > 0 && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Owed to you</span>
-            <span className="font-semibold text-emerald-400 tabular-nums">
-              {formatCurrency(summary.owedToYou)}
-            </span>
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <dt className="text-muted-foreground">Owed to you</dt>
+            <dd>
+              <MoneyAmount amount={summary.owedToYou} size="sm" tone="income" />
+            </dd>
           </div>
         )}
         {summary.youOwe > 0 && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">You owe</span>
-            <span className="font-semibold text-amber-400 tabular-nums">
-              {formatCurrency(summary.youOwe)}
-            </span>
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <dt className="text-muted-foreground">You owe</dt>
+            <dd>
+              <MoneyAmount amount={summary.youOwe} size="sm" tone="warning" />
+            </dd>
           </div>
         )}
+      </dl>
+      <p className="text-muted-foreground mt-4 text-[11px] leading-relaxed">
+        Write-offs close a position without moving cash.{" "}
         <Link
           href="/loans"
-          className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1 text-xs transition-colors"
+          className="hover:text-foreground underline-offset-2 hover:underline"
         >
-          View all loans
-          <ArrowRight className="h-3 w-3" />
+          Review loans
         </Link>
-      </CardContent>
-    </Card>
+      </p>
+    </Section>
   );
 }

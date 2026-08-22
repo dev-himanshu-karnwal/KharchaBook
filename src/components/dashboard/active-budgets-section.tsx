@@ -1,81 +1,75 @@
 import Link from "next/link";
 import { ArrowRight, PiggyBank } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getBudgetProgressColor } from "@/lib/expense-budget";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { BudgetWithStatus } from "@/lib/types";
+import { Section } from "@/components/v2/section";
+import { StatusPill } from "@/components/v2/status-pill";
+import { StateBlock } from "@/components/v2/state-block";
 
 function BudgetProgressCard({ budget }: { budget: BudgetWithStatus }) {
   const progress = Math.min(budget.utilizationPercent, 100);
   const progressColor = getBudgetProgressColor(budget.utilizationPercent);
 
   return (
-    <Card className="hover:ring-foreground/20 min-w-[260px] flex-1 shrink-0 transition-all">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{budget.name}</p>
-            <p className="text-muted-foreground text-xs">
-              {formatDate(budget.start_date)} – {formatDate(budget.end_date)}
-            </p>
-          </div>
-          <Badge variant="outline" className="text-[10px] capitalize">
-            {budget.period_type}
-          </Badge>
+    <div className="surface-panel min-w-[260px] flex-1 shrink-0 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">{budget.name}</p>
+          <p className="text-muted-foreground text-xs">
+            {formatDate(budget.start_date)} – {formatDate(budget.end_date)}
+          </p>
+        </div>
+        <StatusPill tone="neutral">{budget.period_type}</StatusPill>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Spent</span>
+          <span className="tabular-money text-sm font-semibold">
+            {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+          </span>
         </div>
 
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Spent</span>
-            <span className="font-semibold tabular-nums">
-              {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
-            </span>
-          </div>
+        <div className="bg-muted h-2 overflow-hidden rounded-full">
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progress}%`,
+              backgroundColor: progressColor,
+            }}
+          />
+        </div>
 
-          <div className="bg-muted h-2 overflow-hidden rounded-full">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${progress}%`,
-                backgroundColor: progressColor,
-              }}
-            />
-          </div>
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">
+            {budget.remaining >= 0 ? "Remaining" : "Over by"}
+          </span>
+          <span
+            className={cn(
+              "tabular-money font-medium",
+              budget.remaining < 0 && "text-[var(--expense)]"
+            )}
+          >
+            {formatCurrency(Math.abs(budget.remaining))}
+          </span>
+        </div>
+      </div>
 
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">
-              {budget.remaining >= 0 ? "Remaining" : "Over by"}
-            </span>
-            <span
-              className={cn(
-                "font-medium tabular-nums",
-                budget.remaining < 0 && "text-red-400"
-              )}
+      {budget.warnings.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {budget.warnings.map((warning) => (
+            <StatusPill
+              key={warning.level}
+              tone={warning.level === "over_budget" ? "danger" : "warning"}
             >
-              {formatCurrency(Math.abs(budget.remaining))}
-            </span>
-          </div>
+              {warning.message}
+            </StatusPill>
+          ))}
         </div>
-
-        {budget.warnings.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {budget.warnings.map((warning) => (
-              <Badge
-                key={warning.level}
-                variant={
-                  warning.level === "over_budget" ? "destructive" : "secondary"
-                }
-                className="text-[10px]"
-              >
-                {warning.message}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
@@ -86,47 +80,43 @@ export function ActiveBudgetsSection({
 }) {
   if (budgets.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-between gap-4 p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400/10">
-              <PiggyBank className="h-5 w-5 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium">Spending limits</p>
-              <p className="text-muted-foreground text-xs">
-                Set a budget to track and control your expenses
-              </p>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" render={<Link href="/budgets" />}>
-            Set a limit
-            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        </CardContent>
-      </Card>
+      <Section
+        title="Budgets"
+        description="Active spending limits for this period"
+        bare
+      >
+        <div className="surface-panel">
+          <StateBlock
+            kind="empty"
+            icon={PiggyBank}
+            title="No active budget"
+            description="Set a monthly or custom limit to keep expenses intentional."
+            action={
+              <Button size="sm" render={<Link href="/budgets" />}>
+                Set a limit
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
+            }
+            className="py-8"
+          />
+        </div>
+      </Section>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium">Active Budgets</h2>
-        <Button
-          variant="link"
-          size="sm"
-          className="text-muted-foreground h-auto px-0 text-xs"
-          render={<Link href="/budgets" />}
-        >
-          Manage budgets
-          <ArrowRight className="ml-1 h-3 w-3" />
-        </Button>
-      </div>
+    <Section
+      title="Active budgets"
+      description="Live spending against your limits"
+      href="/budgets"
+      hrefLabel="Manage"
+      bare
+    >
       <div className="flex gap-3 overflow-x-auto pb-1">
         {budgets.map((budget) => (
           <BudgetProgressCard key={budget.id} budget={budget} />
         ))}
       </div>
-    </div>
+    </Section>
   );
 }

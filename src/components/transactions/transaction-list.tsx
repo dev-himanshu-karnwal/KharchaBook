@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -39,6 +40,10 @@ import {
   type ActivityItem,
 } from "@/lib/activity-feed";
 import { TransactionToolbar } from "./transaction-toolbar";
+import { PageHeader } from "@/components/v2/page-header";
+import { PAGE_META } from "@/lib/nav";
+import { useTransactionDialog } from "@/components/providers/transaction-dialog-provider";
+import { Plus } from "lucide-react";
 
 function filtersFromSearchParams(params: URLSearchParams): ActivityFilters {
   const uncategorized = params.get("uncategorized");
@@ -97,6 +102,8 @@ export function TransactionList({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setOpen: setAddOpen } = useTransactionDialog();
+  const meta = PAGE_META["/transactions"];
   const [filters, setFilters] = useState<ActivityFilters>(() =>
     filtersFromSearchParams(searchParams)
   );
@@ -225,14 +232,30 @@ export function TransactionList({
   const emptyFiltered = !emptyAll && filtered.length === 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <PageHeader
+        title={meta.title}
+        subtitle={meta.subtitle}
+        className="mb-0 hidden lg:flex"
+        actions={
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add transaction
+          </Button>
+        }
+      />
+
       <Dialog
         open={!!editingTxn}
         onOpenChange={(open) => !open && setEditingTxn(null)}
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit Transaction</DialogTitle>
+            <DialogTitle>Edit transaction</DialogTitle>
+            <DialogDescription>
+              You can change category, description, and date. Amount and
+              accounts stay fixed — delete and re-add to correct those.
+            </DialogDescription>
           </DialogHeader>
           {editingTxn && (
             <TransactionEditForm
@@ -249,26 +272,28 @@ export function TransactionList({
       <ConfirmDialog
         open={!!deletingItem}
         onOpenChange={(open) => !open && setDeletingItem(null)}
-        title="Are you sure?"
+        title="Delete this entry?"
         description={deletingItem ? deleteDescription(deletingItem) : ""}
         onConfirm={handleConfirmDelete}
         loading={deleting}
       />
 
       {!emptyAll && (
-        <TransactionToolbar
-          filters={filters}
-          onChange={setFilters}
-          accounts={accounts}
-          categories={categories}
-          totalCount={allItems.length}
-          filteredCount={filtered.length}
-          summary={summary}
-          selectedCount={selectedItems.length}
-          allVisibleSelected={allVisibleSelected}
-          onToggleSelectAll={toggleSelectAll}
-          onClearSelection={clearSelection}
-        />
+        <div className="surface-panel p-3 md:p-4">
+          <TransactionToolbar
+            filters={filters}
+            onChange={setFilters}
+            accounts={accounts}
+            categories={categories}
+            totalCount={allItems.length}
+            filteredCount={filtered.length}
+            summary={summary}
+            selectedCount={selectedItems.length}
+            allVisibleSelected={allVisibleSelected}
+            onToggleSelectAll={toggleSelectAll}
+            onClearSelection={clearSelection}
+          />
+        </div>
       )}
 
       {emptyAll && (
@@ -276,6 +301,12 @@ export function TransactionList({
           icon={ArrowLeftRight}
           title="No activity yet"
           description="Add a transaction or record a loan to start tracking your finances."
+          action={
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add transaction
+            </Button>
+          }
         />
       )}
 
@@ -300,11 +331,11 @@ export function TransactionList({
 
       {grouped &&
         grouped.map(([date, items]) => (
-          <div key={date}>
-            <h3 className="text-muted-foreground mb-2 px-1 text-xs font-semibold tracking-wider uppercase">
+          <div key={date} className="space-y-2">
+            <h3 className="text-muted-foreground px-1 text-xs font-semibold tracking-[0.12em] uppercase">
               {formatDate(date)}
             </h3>
-            <div className="space-y-0.5">
+            <div className="surface-panel divide-border/60 divide-y overflow-hidden p-1">
               {items.map((item) => (
                 <ActivityRow
                   key={item.id}
@@ -324,7 +355,7 @@ export function TransactionList({
         ))}
 
       {!grouped && filtered.length > 0 && (
-        <div className="space-y-0.5">
+        <div className="surface-panel divide-border/60 divide-y overflow-hidden p-1">
           {filtered.map((item) => (
             <ActivityRow
               key={item.id}

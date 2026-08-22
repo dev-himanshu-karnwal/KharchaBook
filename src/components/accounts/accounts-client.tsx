@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
@@ -16,9 +14,13 @@ import {
 } from "@/components/ui/dialog";
 import { AccountForm } from "./account-form";
 import { createAccount, toggleAccountActive } from "@/actions/accounts";
-import { formatCurrency, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Account, CreateAccountInput } from "@/lib/types";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/v2/page-header";
+import { StatusPill } from "@/components/v2/status-pill";
+import { PAGE_META } from "@/lib/nav";
+import { MoneyAmount } from "@/components/v2/money-amount";
 
 const TYPE_LABELS: Record<string, string> = {
   bank: "Bank",
@@ -30,6 +32,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const meta = PAGE_META["/accounts"];
 
   async function handleCreate(data: CreateAccountInput) {
     setLoading(true);
@@ -56,78 +59,88 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {accounts.length} account{accounts.length !== 1 ? "s" : ""}
-        </p>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button size="sm" />}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add Account
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add Account</DialogTitle>
-            </DialogHeader>
-            <AccountForm
-              onSubmit={handleCreate}
-              onCancel={() => setOpen(false)}
-              loading={loading}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title={meta.title}
+        subtitle={meta.subtitle}
+        className="mb-0"
+        actions={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger render={<Button size="sm" />}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add account
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Add account</DialogTitle>
+              </DialogHeader>
+              <AccountForm
+                onSubmit={handleCreate}
+                onCancel={() => setOpen(false)}
+                loading={loading}
+              />
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      <p className="text-muted-foreground text-sm">
+        {accounts.length} account{accounts.length !== 1 ? "s" : ""} · Credit
+        cards are managed separately
+      </p>
 
       {accounts.length === 0 ? (
         <EmptyState
           icon={Wallet}
           title="No accounts yet"
           description="Add your first bank account, cash, or wallet to start tracking balances."
+          action={
+            <Button size="sm" onClick={() => setOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add account
+            </Button>
+          }
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {accounts.map((account) => (
-            <Card
+            <div
               key={account.id}
               className={cn(
-                "hover:ring-foreground/20 transition-all",
-                !account.is_active && "opacity-50"
+                "surface-panel p-4 transition-opacity",
+                !account.is_active && "opacity-55"
               )}
             >
-              <CardContent className="flex items-start justify-between p-4">
-                <div className="flex items-start gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
                   <span
-                    className="mt-1.5 h-3 w-3 shrink-0 rounded-full ring-2 ring-white/10"
-                    style={{ backgroundColor: account.color ?? "#3b82f6" }}
+                    className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: account.color ?? "#0f766e" }}
+                    aria-hidden
                   />
-                  <div>
-                    <p className="font-medium">{account.name}</p>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <span className="text-muted-foreground text-xs">
-                        {TYPE_LABELS[account.type]}
-                      </span>
-                      {!account.is_active && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          Inactive
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="mt-2 text-xl font-bold tracking-tight tabular-nums">
-                      {formatCurrency(account.balance)}
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{account.name}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {TYPE_LABELS[account.type] ?? account.type}
                     </p>
                   </div>
                 </div>
+                {!account.is_active && (
+                  <StatusPill tone="neutral">Inactive</StatusPill>
+                )}
+              </div>
+              <div className="mt-4 flex items-end justify-between gap-2">
+                <MoneyAmount amount={Number(account.balance)} size="lg" />
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground shrink-0 text-xs"
+                  className="text-muted-foreground text-xs"
                   onClick={() => handleToggle(account.id, account.is_active)}
                 >
                   {account.is_active ? "Deactivate" : "Activate"}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}

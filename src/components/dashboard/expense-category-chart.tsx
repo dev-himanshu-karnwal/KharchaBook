@@ -5,7 +5,6 @@ import {
   getExpensesByCategory,
   type CategoryExpense,
 } from "@/actions/dashboard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -179,22 +178,21 @@ export function ExpenseCategoryChart({
   const maxAmount = data[0]?.amount ?? 0;
 
   return (
-    <Card>
-      <CardHeader className="space-y-4">
-        <CardTitle className="text-base">Expenses by Category</CardTitle>
+    <div className="surface-panel overflow-hidden">
+      <div className="border-border/70 space-y-4 border-b p-4 md:p-5">
         <Tabs
           value={preset}
           onValueChange={(v) => v && setPreset(v as DateRangePreset)}
         >
           <TabsList className="h-auto w-full flex-wrap">
             <TabsTrigger value="week" className="flex-1">
-              This Week
+              This week
             </TabsTrigger>
             <TabsTrigger value="month" className="flex-1">
-              This Month
+              This month
             </TabsTrigger>
             <TabsTrigger value="lastMonth" className="flex-1">
-              Last Month
+              Last month
             </TabsTrigger>
             <TabsTrigger value="custom" className="flex-1">
               Custom
@@ -236,8 +234,8 @@ export function ExpenseCategoryChart({
             </div>
           </div>
         )}
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="p-4 md:p-5">
         {isPending ? (
           <div className="space-y-4">
             <Skeleton className="mx-auto h-40 w-40 rounded-full" />
@@ -265,7 +263,7 @@ export function ExpenseCategoryChart({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

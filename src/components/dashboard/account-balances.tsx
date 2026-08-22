@@ -1,8 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { isAssetAccount } from "@/lib/account-balance";
-import { formatCurrency } from "@/lib/utils";
-import type { Account } from "@/lib/types";
 import Link from "next/link";
+import { isAssetAccount } from "@/lib/account-balance";
+import { MoneyAmount } from "@/components/v2/money-amount";
+import { Section } from "@/components/v2/section";
+import { StateBlock } from "@/components/v2/state-block";
+import type { Account } from "@/lib/types";
+import { Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const TYPE_LABELS: Record<string, string> = {
   bank: "Bank",
@@ -17,58 +20,58 @@ export function AccountBalances({ accounts }: { accounts: Account[] }) {
 
   if (assetAccounts.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Accounts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground py-8 text-center text-sm">
-            No asset accounts yet.{" "}
-            <Link href="/accounts" className="text-primary hover:underline">
-              Add your first account
-            </Link>
-            .
-          </p>
-        </CardContent>
-      </Card>
+      <Section
+        title="Accounts"
+        description="Asset balances available to spend"
+        bare
+      >
+        <div className="surface-panel">
+          <StateBlock
+            kind="empty"
+            icon={Wallet}
+            title="No asset accounts yet"
+            description="Add a bank, cash, or wallet account to start tracking balances."
+            action={
+              <Button size="sm" render={<Link href="/accounts" />}>
+                Add account
+              </Button>
+            }
+          />
+        </div>
+      </Section>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Accounts</CardTitle>
-        <Link
-          href="/accounts"
-          className="text-muted-foreground hover:text-foreground text-sm"
-        >
-          Manage
-        </Link>
-      </CardHeader>
-      <CardContent className="space-y-1">
+    <Section
+      title="Accounts"
+      description="Asset balances available to spend"
+      href="/accounts"
+      hrefLabel="Manage"
+    >
+      <ul className="divide-border/70 -mx-1 divide-y">
         {assetAccounts.map((account) => (
-          <div
+          <li
             key={account.id}
-            className="hover:bg-muted/50 -mx-2 flex items-center justify-between rounded-lg px-2 py-2.5 transition-colors"
+            className="flex items-center justify-between gap-3 px-1 py-3 first:pt-0 last:pb-0"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <span
-                className="h-3 w-3 shrink-0 rounded-full"
-                style={{ backgroundColor: account.color ?? "#3b82f6" }}
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: account.color ?? "#0f766e" }}
+                aria-hidden
               />
-              <div>
-                <p className="text-sm font-medium">{account.name}</p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{account.name}</p>
                 <p className="text-muted-foreground text-xs">
                   {TYPE_LABELS[account.type] ?? account.type}
                 </p>
               </div>
             </div>
-            <span className="text-sm font-semibold tabular-nums">
-              {formatCurrency(account.balance)}
-            </span>
-          </div>
+            <MoneyAmount amount={Number(account.balance)} size="sm" />
+          </li>
         ))}
-      </CardContent>
-    </Card>
+      </ul>
+    </Section>
   );
 }
