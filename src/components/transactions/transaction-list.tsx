@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -136,16 +136,17 @@ export function TransactionList({
     [filtered]
   );
 
-  useEffect(() => {
-    setSelectedIds((prev) => {
-      const next = new Set([...prev].filter((id) => filteredIds.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-  }, [filteredIds]);
+  const effectiveSelectedIds = useMemo(() => {
+    const next = new Set<string>();
+    for (const id of selectedIds) {
+      if (filteredIds.has(id)) next.add(id);
+    }
+    return next;
+  }, [selectedIds, filteredIds]);
 
   const selectedItems = useMemo(
-    () => filtered.filter((item) => selectedIds.has(item.id)),
-    [filtered, selectedIds]
+    () => filtered.filter((item) => effectiveSelectedIds.has(item.id)),
+    [filtered, effectiveSelectedIds]
   );
 
   const summaryItems = selectedItems.length > 0 ? selectedItems : filtered;
@@ -156,7 +157,8 @@ export function TransactionList({
   );
 
   const allVisibleSelected =
-    filtered.length > 0 && filtered.every((item) => selectedIds.has(item.id));
+    filtered.length > 0 &&
+    filtered.every((item) => effectiveSelectedIds.has(item.id));
 
   function toggleItemSelection(id: string, selected: boolean) {
     setSelectedIds((prev) => {
@@ -344,7 +346,7 @@ export function TransactionList({
                   onEdit={setEditingTxn}
                   onDelete={setDeletingItem}
                   selectable
-                  selected={selectedIds.has(item.id)}
+                  selected={effectiveSelectedIds.has(item.id)}
                   onSelectChange={(selected) =>
                     toggleItemSelection(item.id, selected)
                   }

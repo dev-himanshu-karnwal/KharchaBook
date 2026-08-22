@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,12 +94,6 @@ export function BudgetForm({
     () => generateMonthlyBudgetName(year, month),
     [year, month]
   );
-
-  useEffect(() => {
-    if (periodType === "monthly" && !isEdit) {
-      setName(autoMonthlyName);
-    }
-  }, [periodType, autoMonthlyName, isEdit]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -223,7 +217,11 @@ export function BudgetForm({
             <Label htmlFor="budgetName">Name</Label>
             <Input
               id="budgetName"
-              value={name}
+              value={
+                periodType === "monthly" && !isEdit && !name.trim()
+                  ? autoMonthlyName
+                  : name
+              }
               onChange={(e) => setName(e.target.value)}
               placeholder={autoMonthlyName}
             />
