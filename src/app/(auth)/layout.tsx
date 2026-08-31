@@ -14,8 +14,8 @@ export default function AuthLayout({
             KharchaBook
           </h1>
           <p className="text-muted-foreground mx-auto max-w-sm text-sm leading-relaxed">
-            Sign in to see balances, activity, and budgets — clearly and
-            accurately.
+            Sign in or create an account to see balances, activity, and budgets
+            — clearly and accurately.
           </p>
         </div>
         <div className="surface-panel p-6">{children}</div>

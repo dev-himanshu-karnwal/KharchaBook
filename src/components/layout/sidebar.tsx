@@ -11,9 +11,11 @@ import { isNavActive, NAV_GROUPS } from "@/lib/nav";
 export function Sidebar({
   className,
   onNavigate,
+  userEmail,
 }: {
   className?: string;
   onNavigate?: () => void;
+  userEmail?: string | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -87,6 +89,14 @@ export function Sidebar({
       </nav>
 
       <div className="border-sidebar-border border-t p-3">
+        {userEmail && (
+          <p
+            className="text-muted-foreground mb-2 truncate px-3 text-xs"
+            title={userEmail}
+          >
+            {userEmail}
+          </p>
+        )}
         <Button
           variant="ghost"
           className="text-muted-foreground w-full justify-start gap-3"

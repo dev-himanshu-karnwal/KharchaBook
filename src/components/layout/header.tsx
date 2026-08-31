@@ -14,7 +14,7 @@ import { Sidebar } from "./sidebar";
 import { useTransactionDialog } from "@/components/providers/transaction-dialog-provider";
 import { PAGE_META } from "@/lib/nav";
 
-export function Header() {
+export function Header({ userEmail }: { userEmail?: string | null }) {
   const pathname = usePathname();
   const { setOpen } = useTransactionDialog();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -34,7 +34,10 @@ export function Header() {
         </SheetTrigger>
         <SheetContent side="left" className="w-72 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <Sidebar onNavigate={() => setMobileOpen(false)} />
+          <Sidebar
+            userEmail={userEmail}
+            onNavigate={() => setMobileOpen(false)}
+          />
         </SheetContent>
       </Sheet>
 
