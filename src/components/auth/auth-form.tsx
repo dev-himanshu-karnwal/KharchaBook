@@ -68,7 +68,6 @@ export function AuthForm({
           type="email"
           required
           autoComplete="email"
-          placeholder="you@example.com"
           autoFocus
           aria-invalid={!!error}
           aria-describedby={error ? "auth-error" : undefined}
@@ -83,7 +82,6 @@ export function AuthForm({
           required
           minLength={isSignup ? 6 : undefined}
           autoComplete={isSignup ? "new-password" : "current-password"}
-          placeholder="••••••••"
           aria-invalid={!!error}
         />
       </div>
@@ -97,7 +95,6 @@ export function AuthForm({
             required
             minLength={6}
             autoComplete="new-password"
-            placeholder="••••••••"
             aria-invalid={!!error}
           />
         </div>
