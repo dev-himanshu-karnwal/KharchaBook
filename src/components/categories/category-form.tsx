@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,7 +100,8 @@ export function CategoryForm({
           Cancel
         </Button>
         <Button type="submit" disabled={loading || !name.trim()}>
-          {loading ? "Creating..." : "Create Category"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Creating…" : "Create Category"}
         </Button>
       </div>
     </form>

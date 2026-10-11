@@ -1,4 +1,8 @@
-import { getCategories, getCategoryStats } from "@/actions/categories";
+import {
+  getCategories,
+  getCategoryStats,
+  getUsedCustomCategoryIds,
+} from "@/actions/categories";
 import { CategoriesClient } from "@/components/categories/categories-client";
 import {
   getDateRangeFromFilters,
@@ -7,6 +11,7 @@ import {
 import { getMonthRange } from "@/lib/utils";
 import type { Category } from "@/lib/types";
 import { Suspense } from "react";
+import { CategoriesSkeleton } from "@/components/v2/page-skeletons";
 
 async function CategoriesContent({
   searchParams,
@@ -23,9 +28,10 @@ async function CategoriesContent({
   const filters = parseCategoryFilters(params, defaultRange);
   const { start, end } = getDateRangeFromFilters(filters, defaultRange);
 
-  const [categoriesRes, statsRes] = await Promise.all([
+  const [categoriesRes, statsRes, usedRes] = await Promise.all([
     getCategories(),
     getCategoryStats(start, end, "all"),
+    getUsedCustomCategoryIds(),
   ]);
 
   const categories = categoriesRes.success ? categoriesRes.data : [];
@@ -42,6 +48,7 @@ async function CategoriesContent({
     <CategoriesClient
       categories={categories as Category[]}
       initialStats={stats}
+      usedCategoryIds={usedRes.success ? usedRes.data : null}
     />
   );
 }
@@ -52,11 +59,7 @@ export default function CategoriesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   return (
-    <Suspense
-      fallback={
-        <div className="text-muted-foreground text-sm">Loading categories…</div>
-      }
-    >
+    <Suspense fallback={<CategoriesSkeleton />}>
       <CategoriesContent searchParams={searchParams} />
     </Suspense>
   );

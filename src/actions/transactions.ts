@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import {
   computeTransactionBalanceDeltas,
@@ -121,7 +120,6 @@ export async function createTransaction(
     return { success: false, error: balanceResult.error };
   }
 
-  revalidatePath("/", "layout");
   return { success: true, data: txn as Transaction };
 }
 
@@ -199,7 +197,6 @@ export async function updateTransaction(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: updated as Transaction };
 }
 
@@ -227,6 +224,5 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("transactions").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }

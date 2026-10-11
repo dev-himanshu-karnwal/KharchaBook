@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -202,6 +202,7 @@ export function TransactionForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0 || !accountId) return;
 
@@ -286,6 +287,7 @@ export function TransactionForm({
             key={option.value}
             type="button"
             onClick={() => handleTypeChange(option.value)}
+            aria-pressed={type === option.value}
             className={cn(
               "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               type === option.value
@@ -303,6 +305,7 @@ export function TransactionForm({
         <Input
           id="amount"
           type="number"
+          inputMode="decimal"
           step="0.01"
           min="0.01"
           placeholder="0.00"
@@ -310,7 +313,7 @@ export function TransactionForm({
           onChange={(e) => setAmount(e.target.value)}
           required
           autoFocus
-          className="text-lg"
+          className="h-10 text-lg tabular-nums"
         />
       </div>
 
@@ -427,6 +430,7 @@ export function TransactionForm({
           variant="outline"
           className="flex-1"
           onClick={onCancel}
+          disabled={loading}
         >
           Cancel
         </Button>
@@ -439,7 +443,8 @@ export function TransactionForm({
             (type === "transfer" && !transferToAccountId)
           }
         >
-          {loading ? "Saving..." : "Save"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Saving…" : "Save"}
         </Button>
       </div>
     </form>

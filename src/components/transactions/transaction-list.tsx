@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { deleteLoan, deleteRepayment } from "@/actions/loans";
 import { TransactionEditForm } from "./transaction-edit-form";
 import { ActivityRow } from "@/components/shared/activity-row";
 import { toast } from "sonner";
+import { runAction } from "@/lib/run-action";
 import { useRouter } from "next/navigation";
 import { ArrowLeftRight, FilterX } from "lucide-react";
 import type {
@@ -89,6 +90,9 @@ function deleteDescription(item: ActivityItem): string {
   return "This repayment will be permanently removed and the loan balance will be updated.";
 }
 
+/** Rows rendered per batch; keeps very large ledgers snappy. */
+const RENDER_BATCH = 150;
+
 export function TransactionList({
   transactions,
   loans,
@@ -112,6 +116,15 @@ export function TransactionList({
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  // Filter against a deferred copy so typing in search stays responsive on
+  // large ledgers.
+  const deferredFilters = useDeferredValue(filters);
+  const [visibleCount, setVisibleCount] = useState(RENDER_BATCH);
+  const [prevFilters, setPrevFilters] = useState(deferredFilters);
+  if (deferredFilters !== prevFilters) {
+    setPrevFilters(deferredFilters);
+    setVisibleCount(RENDER_BATCH);
+  }
 
   const allItems = useMemo(
     () => buildActivityFeed(transactions, loans),
@@ -119,16 +132,28 @@ export function TransactionList({
   );
 
   const filtered = useMemo(() => {
-    const matched = filterActivity(allItems, filters);
-    return sortActivity(matched, filters.sortField, filters.sortDir, loans);
-  }, [allItems, filters, loans]);
+    const matched = filterActivity(allItems, deferredFilters);
+    return sortActivity(
+      matched,
+      deferredFilters.sortField,
+      deferredFilters.sortDir,
+      loans
+    );
+  }, [allItems, deferredFilters, loans]);
+
+  // Render rows progressively; totals and selection still use every match.
+  const visible = useMemo(
+    () => filtered.slice(0, visibleCount),
+    [filtered, visibleCount]
+  );
+  const hiddenCount = filtered.length - visible.length;
 
   const grouped = useMemo(
     () =>
-      filters.sortField === "date"
-        ? groupActivityByDate(filtered, filters.sortDir)
+      deferredFilters.sortField === "date"
+        ? groupActivityByDate(visible, deferredFilters.sortDir)
         : null,
-    [filtered, filters.sortField, filters.sortDir]
+    [visible, deferredFilters.sortField, deferredFilters.sortDir]
   );
 
   const filteredIds = useMemo(
@@ -184,7 +209,9 @@ export function TransactionList({
   async function handleUpdate(data: UpdateTransactionInput) {
     if (!editingTxn) return;
     setLoading(true);
-    const result = await updateTransaction(editingTxn.id, data);
+    const result = await runAction(() =>
+      updateTransaction(editingTxn.id, data)
+    );
     setLoading(false);
 
     if (result.success) {
@@ -208,12 +235,14 @@ export function TransactionList({
       return;
     }
     if (deletingItem.kind === "transaction" && deletingItem.transaction) {
-      result = await deleteTransaction(deletingItem.transaction.id);
+      const transactionId = deletingItem.transaction.id;
+      result = await runAction(() => deleteTransaction(transactionId));
     } else if (deletingItem.kind === "loan" && deletingItem.loanId) {
-      result = await deleteLoan(deletingItem.loanId);
+      const loanId = deletingItem.loanId;
+      result = await runAction(() => deleteLoan(loanId));
     } else if (deletingItem.kind === "repayment") {
       const repaymentId = deletingItem.id.replace("repayment-", "");
-      result = await deleteRepayment(repaymentId);
+      result = await runAction(() => deleteRepayment(repaymentId));
     } else {
       setDeleting(false);
       return;
@@ -356,9 +385,9 @@ export function TransactionList({
           </div>
         ))}
 
-      {!grouped && filtered.length > 0 && (
+      {!grouped && visible.length > 0 && (
         <div className="surface-panel divide-border/60 divide-y overflow-hidden p-1">
-          {filtered.map((item) => (
+          {visible.map((item) => (
             <ActivityRow
               key={item.id}
               item={item}
@@ -372,6 +401,21 @@ export function TransactionList({
               }
             />
           ))}
+        </div>
+      )}
+
+      {hiddenCount > 0 && (
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <p className="text-muted-foreground text-xs tabular-nums">
+            Showing {visible.length} of {filtered.length}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setVisibleCount((count) => count + RENDER_BATCH)}
+          >
+            Show {Math.min(RENDER_BATCH, hiddenCount)} more
+          </Button>
         </div>
       )}
     </div>

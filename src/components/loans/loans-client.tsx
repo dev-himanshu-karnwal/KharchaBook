@@ -29,6 +29,7 @@ import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import { loanWriteOffLabel } from "@/lib/activity-feed";
 import type { Account, LoanSummary, PersonalLoan } from "@/lib/types";
 import { toast } from "sonner";
+import { runAction } from "@/lib/run-action";
 import { PageHeader } from "@/components/v2/page-header";
 import { MoneyAmount } from "@/components/v2/money-amount";
 import { PAGE_META } from "@/lib/nav";
@@ -72,7 +73,7 @@ function LoanCard({
 
   async function handleRepayment(data: Parameters<typeof createRepayment>[0]) {
     setLoading(true);
-    const result = await createRepayment(data);
+    const result = await runAction(() => createRepayment(data));
     setLoading(false);
 
     if (result.success) {
@@ -264,7 +265,7 @@ export function LoansClient({
 
   async function handleCreate(data: Parameters<typeof createLoan>[0]) {
     setLoading(true);
-    const result = await createLoan(data);
+    const result = await runAction(() => createLoan(data));
     setLoading(false);
 
     if (result.success) {
@@ -282,8 +283,8 @@ export function LoansClient({
 
     const result =
       deleteTarget.type === "loan"
-        ? await deleteLoan(deleteTarget.id)
-        : await deleteRepayment(deleteTarget.id);
+        ? await runAction(() => deleteLoan(deleteTarget.id))
+        : await runAction(() => deleteRepayment(deleteTarget.id));
 
     setDeleting(false);
 
@@ -301,7 +302,7 @@ export function LoansClient({
   async function handleConfirmWriteOff() {
     if (!writeOffTarget) return;
     setWritingOff(true);
-    const result = await writeOffLoan(writeOffTarget.id);
+    const result = await runAction(() => writeOffLoan(writeOffTarget.id));
     setWritingOff(false);
 
     if (result.success) {
@@ -314,7 +315,7 @@ export function LoansClient({
   }
 
   async function handleUndoWriteOff(id: string) {
-    const result = await undoWriteOffLoan(id);
+    const result = await runAction(() => undoWriteOffLoan(id));
     if (result.success) {
       toast.success("Loan restored");
       router.refresh();

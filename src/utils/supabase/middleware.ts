@@ -28,9 +28,10 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims verifies the JWT locally (asymmetric keys) and refreshes an
+  // expired session, so most requests skip the Auth server round-trip.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? data.claims : null;
 
   const isPublic = PUBLIC_PATHS.some((p) =>
     request.nextUrl.pathname.startsWith(p)

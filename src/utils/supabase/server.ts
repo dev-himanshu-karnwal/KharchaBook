@@ -26,3 +26,20 @@ export async function createClient() {
     }
   );
 }
+
+/**
+ * Lightweight auth check for read paths. `getClaims` verifies the JWT locally
+ * when the project uses asymmetric signing keys (falling back to `getUser()`
+ * otherwise), avoiding an Auth server round-trip on every page render.
+ * Mutations should keep using `auth.getUser()`.
+ */
+export async function getAuthClaims(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<{ id: string; email: string | null } | null> {
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data?.claims?.sub) return null;
+  return {
+    id: data.claims.sub,
+    email: typeof data.claims.email === "string" ? data.claims.email : null,
+  };
+}

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type {
   ActionResult,
@@ -25,11 +24,6 @@ export interface CategoryStatsSummary {
   expenseTotal: number;
   incomeTotal: number;
   transactionCount: number;
-}
-
-function revalidateCategoryPaths() {
-  revalidatePath("/", "layout");
-  revalidatePath("/categories");
 }
 
 export async function getCategories(): Promise<ActionResult<Category[]>> {
@@ -223,16 +217,74 @@ export async function createCategory(
 
   if (error) return { success: false, error: error.message };
 
-  revalidateCategoryPaths();
   return { success: true, data: category as Category };
+}
+
+async function isCategoryInUse(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryId: string
+): Promise<{ inUse: boolean } | { error: string }> {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("category_id", categoryId)
+    .limit(1);
+
+  if (error) return { error: error.message };
+  return { inUse: (data ?? []).length > 0 };
+}
+
+/**
+ * IDs of the user's custom (non-system) categories that are referenced by at
+ * least one transaction, across all time — not just the selected period.
+ */
+export async function getUsedCustomCategoryIds(): Promise<
+  ActionResult<string[]>
+> {
+  const supabase = await createClient();
+
+  const { data: custom, error } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("is_system", false);
+
+  if (error) return { success: false, error: error.message };
+
+  const checks = await Promise.all(
+    (custom ?? []).map(async ({ id }) => ({
+      id: id as string,
+      result: await isCategoryInUse(supabase, id as string),
+    }))
+  );
+
+  const failed = checks.find(({ result }) => "error" in result);
+  if (failed && "error" in failed.result) {
+    return { success: false, error: failed.result.error };
+  }
+
+  return {
+    success: true,
+    data: checks
+      .filter(({ result }) => "inUse" in result && result.inUse)
+      .map(({ id }) => id),
+  };
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
   const supabase = await createClient();
 
+  const usage = await isCategoryInUse(supabase, id);
+  if ("error" in usage) return { success: false, error: usage.error };
+  if (usage.inUse) {
+    return {
+      success: false,
+      error:
+        "This category is used by existing transactions and can’t be deleted.",
+    };
+  }
+
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidateCategoryPaths();
   return { success: true, data: undefined };
 }

@@ -2,7 +2,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { TransactionDialogProvider } from "@/components/providers/transaction-dialog-provider";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, getAuthClaims } from "@/utils/supabase/server";
 
 export default async function AppLayout({
   children,
@@ -10,9 +10,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthClaims(supabase);
   const userEmail = user?.email ?? null;
 
   return (

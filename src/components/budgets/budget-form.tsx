@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,6 +163,7 @@ export function BudgetForm({
         <Input
           id="budgetAmount"
           type="number"
+          inputMode="decimal"
           step="0.01"
           min="0.01"
           placeholder="0.00"
@@ -288,7 +290,8 @@ export function BudgetForm({
             loading || !amount || (periodType === "custom" && !name.trim())
           }
         >
-          {loading ? "Saving..." : isEdit ? "Update Budget" : "Create Budget"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Saving…" : isEdit ? "Update Budget" : "Create Budget"}
         </Button>
       </div>
     </form>

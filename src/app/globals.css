@@ -172,21 +172,21 @@
 
 @layer utilities {
   .page-enter {
-    animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: page-enter 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .fade-up {
-    animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: fade-up 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .fade-up-delay-1 {
-    animation-delay: 60ms;
+    animation-delay: 40ms;
   }
   .fade-up-delay-2 {
-    animation-delay: 120ms;
+    animation-delay: 80ms;
   }
   .fade-up-delay-3 {
-    animation-delay: 180ms;
+    animation-delay: 120ms;
   }
 
   .app-atmosphere {
@@ -204,8 +204,10 @@
       var(--background);
   }
 
+  /* No backdrop blur: panels sit on a smooth gradient, and blurring dozens of
+     them (e.g. the ledger) is expensive and causes scroll jank. */
   .surface-panel {
-    @apply border-border/80 bg-card/80 rounded-2xl border shadow-[0_1px_0_oklch(1_0_0_/_0.4)_inset] backdrop-blur-md;
+    @apply border-border/80 bg-card/90 rounded-2xl border shadow-[0_1px_0_oklch(1_0_0_/_0.4)_inset];
   }
 
   .money-pos {
@@ -236,7 +238,7 @@
   @keyframes fade-up {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(6px);
     }
     to {
       opacity: 1;

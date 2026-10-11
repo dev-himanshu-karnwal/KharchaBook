@@ -17,6 +17,7 @@ import { createAccount, toggleAccountActive } from "@/actions/accounts";
 import { cn } from "@/lib/utils";
 import type { Account, CreateAccountInput } from "@/lib/types";
 import { toast } from "sonner";
+import { runAction } from "@/lib/run-action";
 import { PageHeader } from "@/components/v2/page-header";
 import { StatusPill } from "@/components/v2/status-pill";
 import { PAGE_META } from "@/lib/nav";
@@ -36,7 +37,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
 
   async function handleCreate(data: CreateAccountInput) {
     setLoading(true);
-    const result = await createAccount(data);
+    const result = await runAction(() => createAccount(data));
     setLoading(false);
 
     if (result.success) {
@@ -49,7 +50,7 @@ export function AccountsClient({ accounts }: { accounts: Account[] }) {
   }
 
   async function handleToggle(id: string, isActive: boolean) {
-    const result = await toggleAccountActive(id, !isActive);
+    const result = await runAction(() => toggleAccountActive(id, !isActive));
     if (result.success) {
       toast.success(isActive ? "Account deactivated" : "Account activated");
       router.refresh();

@@ -23,6 +23,7 @@ import {
 import { formatCurrency, cn } from "@/lib/utils";
 import type { Account, CreateCreditCardInput } from "@/lib/types";
 import { toast } from "sonner";
+import { runAction } from "@/lib/run-action";
 import { PageHeader } from "@/components/v2/page-header";
 import { StatusPill } from "@/components/v2/status-pill";
 import { MoneyAmount } from "@/components/v2/money-amount";
@@ -35,7 +36,7 @@ export function CreditCardsClient({ accounts }: { accounts: Account[] }) {
 
   async function handleCreate(data: CreateCreditCardInput) {
     setLoading(true);
-    const result = await createCreditCard(data);
+    const result = await runAction(() => createCreditCard(data));
     setLoading(false);
 
     if (result.success) {
@@ -48,7 +49,7 @@ export function CreditCardsClient({ accounts }: { accounts: Account[] }) {
   }
 
   async function handleToggle(id: string, isActive: boolean) {
-    const result = await toggleAccountActive(id, !isActive);
+    const result = await runAction(() => toggleAccountActive(id, !isActive));
     if (result.success) {
       toast.success(
         isActive ? "Credit card deactivated" : "Credit card activated"

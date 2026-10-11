@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,7 +117,8 @@ export function AccountForm({ onSubmit, onCancel, loading }: AccountFormProps) {
           className="flex-1"
           disabled={loading || !name.trim()}
         >
-          {loading ? "Saving..." : "Add Account"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Saving…" : "Add Account"}
         </Button>
       </div>
     </form>

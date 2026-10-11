@@ -1,7 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { getActiveBudgets } from "@/actions/budgets";
 import { getExpensesByCategory } from "@/actions/dashboard";
-import { getLoanSummary, getLoans } from "@/actions/loans";
+import { getLoans } from "@/actions/loans";
+import { summarizeLoans } from "@/lib/loan-summary";
 import { getMonthRange } from "@/lib/utils";
 import { PAGE_META } from "@/lib/nav";
 import { PageHeader } from "@/components/v2/page-header";
@@ -37,7 +38,6 @@ export default async function DashboardPage() {
     expenseRes,
     transactionsRes,
     categoryExpensesRes,
-    loanSummaryRes,
     loansRes,
     activeBudgetsRes,
   ] = await Promise.all([
@@ -62,7 +62,6 @@ export default async function DashboardPage() {
       .gte("date", start)
       .lte("date", end),
     getExpensesByCategory(start, end),
-    getLoanSummary(),
     getLoans(),
     getActiveBudgets(),
   ]);
@@ -190,8 +189,8 @@ export default async function DashboardPage() {
           <AccountBalances accounts={accounts} />
           <CreditCardSummary accounts={accounts} />
           <RecentActivity items={monthlyActivity} loans={loans} />
-          {loanSummaryRes.success && (
-            <LoanSummaryCard summary={loanSummaryRes.data} />
+          {loansRes.success && (
+            <LoanSummaryCard summary={summarizeLoans(loansRes.data)} />
           )}
         </div>
       </div>

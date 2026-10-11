@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,7 +132,8 @@ export function TransactionEditForm({
           Cancel
         </Button>
         <Button type="submit" className="flex-1" disabled={loading}>
-          {loading ? "Saving..." : "Save"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Saving…" : "Save"}
         </Button>
       </div>
     </form>

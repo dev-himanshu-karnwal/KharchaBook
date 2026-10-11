@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ export function CreditCardForm({
           <Input
             id="creditLimit"
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="0.01"
             placeholder="Optional"
@@ -73,6 +75,7 @@ export function CreditCardForm({
           <Input
             id="outstanding"
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="0"
             placeholder="0.00"
@@ -88,6 +91,7 @@ export function CreditCardForm({
           <Input
             id="paymentDueDay"
             type="number"
+            inputMode="numeric"
             min="1"
             max="31"
             placeholder="1-31"
@@ -100,6 +104,7 @@ export function CreditCardForm({
           <Input
             id="statementDay"
             type="number"
+            inputMode="numeric"
             min="1"
             max="31"
             placeholder="1-31"
@@ -154,7 +159,8 @@ export function CreditCardForm({
           className="flex-1"
           disabled={loading || !name.trim()}
         >
-          {loading ? "Saving..." : "Add Credit Card"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Saving…" : "Add Credit Card"}
         </Button>
       </div>
     </form>

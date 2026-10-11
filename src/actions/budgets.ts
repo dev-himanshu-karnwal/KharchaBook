@@ -1,7 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, getAuthClaims } from "@/utils/supabase/server";
 import {
   enrichBudgetWithStatus,
   getMonthDateRange,
@@ -47,12 +46,10 @@ function computeSpentByBudget(
 }
 
 async function enrichBudgetsWithSpent(
+  supabase: Awaited<ReturnType<typeof createClient>>,
   budgets: ExpenseBudget[]
 ): Promise<BudgetWithStatus[]> {
   if (budgets.length === 0) return [];
-
-  const { supabase, user } = await getAuthenticatedUser();
-  if (!user) return [];
 
   const minDate = budgets.reduce(
     (min, b) => (b.start_date < min ? b.start_date : min),
@@ -84,7 +81,8 @@ async function enrichBudgetsWithSpent(
 }
 
 export async function getBudgets(): Promise<ActionResult<BudgetWithStatus[]>> {
-  const { supabase, user } = await getAuthenticatedUser();
+  const supabase = await createClient();
+  const user = await getAuthClaims(supabase);
   if (!user) return { success: false, error: "Not authenticated" };
 
   const { data, error } = await supabase
@@ -95,7 +93,7 @@ export async function getBudgets(): Promise<ActionResult<BudgetWithStatus[]>> {
   if (error) return { success: false, error: error.message };
 
   const budgets = (data ?? []) as ExpenseBudget[];
-  const enriched = await enrichBudgetsWithSpent(budgets);
+  const enriched = await enrichBudgetsWithSpent(supabase, budgets);
   return { success: true, data: enriched };
 }
 
@@ -141,7 +139,6 @@ export async function createBudget(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: data as ExpenseBudget };
 }
 
@@ -200,7 +197,6 @@ export async function updateBudget(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: data as ExpenseBudget };
 }
 
@@ -215,7 +211,6 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
 

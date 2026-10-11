@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { createClient } from "@/utils/supabase/server";
+import { createClient, getAuthClaims } from "@/utils/supabase/server";
 import {
   loanBalanceDelta,
   repaymentBalanceDelta,
   validateBalanceDelta,
 } from "@/lib/account-balance";
+import { summarizeLoans } from "@/lib/loan-summary";
 import type {
   Account,
   ActionResult,
@@ -69,9 +69,7 @@ async function applyAccountDelta(
 
 export async function getLoans(): Promise<ActionResult<PersonalLoan[]>> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthClaims(supabase);
   if (!user) return { success: false, error: "Not authenticated" };
 
   const { data: loans, error } = await supabase
@@ -93,18 +91,7 @@ export async function getLoanSummary(): Promise<ActionResult<LoanSummary>> {
   const result = await getLoans();
   if (!result.success) return result;
 
-  let owedToYou = 0;
-  let youOwe = 0;
-
-  for (const loan of result.data) {
-    if (loan.is_written_off) continue;
-    const outstanding = loan.outstanding_amount ?? 0;
-    if (outstanding <= 0) continue;
-    if (loan.direction === "lent") owedToYou += outstanding;
-    else youOwe += outstanding;
-  }
-
-  return { success: true, data: { owedToYou, youOwe } };
+  return { success: true, data: summarizeLoans(result.data) };
 }
 
 export async function createLoan(
@@ -147,7 +134,6 @@ export async function createLoan(
   const applied = await applyAccountDelta(supabase, account, delta);
   if (!applied.ok) return { success: false, error: applied.error };
 
-  revalidatePath("/", "layout");
   return {
     success: true,
     data: enrichLoan({
@@ -225,7 +211,6 @@ export async function createRepayment(
   const applied = await applyAccountDelta(supabase, account, delta);
   if (!applied.ok) return { success: false, error: applied.error };
 
-  revalidatePath("/", "layout");
   return {
     success: true,
     data: { ...(repayment as LoanRepayment), amount: Number(repayment.amount) },
@@ -291,7 +276,6 @@ export async function deleteLoan(id: string): Promise<ActionResult> {
   const { error } = await supabase.from("personal_loans").delete().eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
 
@@ -330,7 +314,6 @@ export async function deleteRepayment(id: string): Promise<ActionResult> {
     .eq("id", id);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: undefined };
 }
 
@@ -381,7 +364,6 @@ export async function writeOffLoan(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: enrichLoan(updated) };
 }
 
@@ -420,6 +402,5 @@ export async function undoWriteOffLoan(
 
   if (error) return { success: false, error: error.message };
 
-  revalidatePath("/", "layout");
   return { success: true, data: enrichLoan(updated) };
 }

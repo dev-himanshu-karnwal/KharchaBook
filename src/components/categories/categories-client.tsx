@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -163,9 +164,12 @@ function DonutChart({ data, total }: { data: CategoryStats[]; total: number }) {
 export function CategoriesClient({
   categories,
   initialStats,
+  usedCategoryIds,
 }: {
   categories: Category[];
   initialStats: CategoryStatsSummary;
+  /** Custom categories referenced by any transaction; null if unknown. */
+  usedCategoryIds: string[] | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -182,6 +186,15 @@ export function CategoriesClient({
   const [stats, setStats] = useState(initialStats);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const usedIds = useMemo(
+    () => (usedCategoryIds ? new Set(usedCategoryIds) : null),
+    [usedCategoryIds]
+  );
   const [isPending, startTransition] = useTransition();
   const skipInitialFetch = useRef(true);
 
@@ -316,28 +329,42 @@ export function CategoriesClient({
     color: string | null;
   }) {
     setCreating(true);
-    const result = await createCategory(data.name, data.type, data.color);
-    setCreating(false);
-
-    if (result.success) {
-      toast.success("Category created");
-      setCreateOpen(false);
-      router.refresh();
-      fetchStats(activeRange.start, activeRange.end);
-    } else {
-      toast.error(result.error);
+    try {
+      const result = await createCategory(data.name, data.type, data.color);
+      if (result.success) {
+        toast.success("Category created");
+        setCreateOpen(false);
+        router.refresh();
+        fetchStats(activeRange.start, activeRange.end);
+      } else {
+        toast.error(result.error);
+      }
+    } catch {
+      toast.error("Couldn’t create the category. Try again.");
+    } finally {
+      setCreating(false);
     }
   }
 
-  async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete category "${name}"?`)) return;
-    const result = await deleteCategory(id);
-    if (result.success) {
-      toast.success("Category deleted");
-      router.refresh();
-      fetchStats(activeRange.start, activeRange.end);
-    } else {
-      toast.error(result.error);
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const result = await deleteCategory(deleteTarget.id);
+      if (result.success) {
+        toast.success("Category deleted");
+        setDeleteTarget(null);
+        router.refresh();
+        fetchStats(activeRange.start, activeRange.end);
+      } else {
+        toast.error(result.error);
+        setDeleteTarget(null);
+        router.refresh();
+      }
+    } catch {
+      toast.error("Couldn’t delete the category. Try again.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -653,9 +680,13 @@ export function CategoriesClient({
                   </TableHeader>
                   <TableBody>
                     {filteredCategories.map((row) => {
+                      // Only unused custom categories can be deleted. If usage
+                      // couldn't be checked, hide delete to be safe.
                       const canDelete =
                         !row.isSystem &&
-                        !row.categoryId.startsWith("uncategorized");
+                        !row.categoryId.startsWith("uncategorized") &&
+                        usedIds !== null &&
+                        !usedIds.has(row.categoryId);
                       const categoryMeta = categories.find(
                         (c) => c.id === row.categoryId
                       );
@@ -701,13 +732,15 @@ export function CategoriesClient({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="text-muted-foreground h-8 w-8"
+                                className="text-muted-foreground hover:text-destructive h-8 w-8"
+                                aria-label={`Delete ${row.categoryName}`}
+                                title="Delete category"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDelete(
-                                    row.categoryId,
-                                    row.categoryName
-                                  );
+                                  setDeleteTarget({
+                                    id: row.categoryId,
+                                    name: row.categoryName,
+                                  });
                                 }}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -724,6 +757,17 @@ export function CategoriesClient({
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setDeleteTarget(null);
+        }}
+        title={`Delete “${deleteTarget?.name ?? ""}”?`}
+        description="This category isn’t used by any transactions. It will be permanently removed."
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+      />
 
       <CategoryTransactionsSheet
         open={!!selectedCategory}

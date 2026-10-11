@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,6 +98,7 @@ export function LoanForm({
         <Input
           id="amount"
           type="number"
+          inputMode="decimal"
           step="0.01"
           min="0.01"
           placeholder="0.00"
@@ -162,7 +164,8 @@ export function LoanForm({
           className="flex-1"
           disabled={loading || !accountId || !personName.trim()}
         >
-          {loading ? "Saving..." : "Save"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Saving…" : "Save"}
         </Button>
       </div>
     </form>

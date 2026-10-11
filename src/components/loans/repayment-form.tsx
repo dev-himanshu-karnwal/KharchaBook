@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +67,7 @@ export function RepaymentForm({
         <Input
           id="amount"
           type="number"
+          inputMode="decimal"
           step="0.01"
           min="0.01"
           max={outstanding}
@@ -133,7 +135,8 @@ export function RepaymentForm({
           className="flex-1"
           disabled={loading || !accountId}
         >
-          {loading ? "Saving..." : "Record Repayment"}
+          {loading && <Loader2 className="animate-spin" aria-hidden />}
+          {loading ? "Saving…" : "Record Repayment"}
         </Button>
       </div>
     </form>

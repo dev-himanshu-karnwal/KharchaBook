@@ -27,6 +27,7 @@ import type {
   UpdateBudgetInput,
 } from "@/lib/types";
 import { toast } from "sonner";
+import { runAction } from "@/lib/run-action";
 import { PageHeader } from "@/components/v2/page-header";
 import { PAGE_META } from "@/lib/nav";
 
@@ -169,7 +170,9 @@ export function BudgetsClient({
 
   async function handleCreate(data: CreateBudgetInput | UpdateBudgetInput) {
     setLoading(true);
-    const result = await createBudget(data as CreateBudgetInput);
+    const result = await runAction(() =>
+      createBudget(data as CreateBudgetInput)
+    );
     setLoading(false);
 
     if (result.success) {
@@ -185,7 +188,9 @@ export function BudgetsClient({
     if (!editBudget) return;
 
     setLoading(true);
-    const result = await updateBudget(editBudget.id, data as UpdateBudgetInput);
+    const result = await runAction(() =>
+      updateBudget(editBudget.id, data as UpdateBudgetInput)
+    );
     setLoading(false);
 
     if (result.success) {
@@ -201,7 +206,7 @@ export function BudgetsClient({
     if (!deleteId) return;
 
     setLoading(true);
-    const result = await deleteBudget(deleteId);
+    const result = await runAction(() => deleteBudget(deleteId));
     setLoading(false);
 
     if (result.success) {
